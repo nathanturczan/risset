@@ -78,3 +78,7 @@ See the `examples/` folder for ready-to-use MIDI files covering common ratios.
 ## License
 
 MIT
+
+## About the Author
+
+Nathan Turczan is a composer and creative technologist based in Los Angeles, CA. You can find his website at [nathanturczan.com](https://nathanturczan.com), follow him on Instagram [@nathan_turczan](https://www.instagram.com/nathan_turczan/), or reach him at nathanturczan@gmail.com.

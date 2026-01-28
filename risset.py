@@ -7,6 +7,7 @@ Two layers with opposing tempo curves and crossfading velocities.
 import argparse
 from midiutil import MIDIFile
 import math
+import os
 
 
 def generate_layer_times_forward(total_beats, base_bpm, start_tempo, end_tempo):
@@ -157,6 +158,144 @@ def split_continuous_to_layers(continuous_times, total_beats):
     layer1_times = [max(0, t) for t in layer1_times]
 
     return layer1_times, layer2_times
+
+
+def generate_lilypond(
+    layer1_times,
+    layer2_times,
+    metabar_beats,
+    time_sig_num,
+    time_sig_den,
+    bpm,
+    ratio_num,
+    ratio_den,
+    direction,
+    output_file,
+    ramp=False
+):
+    """
+    Generate a LilyPond file showing the Risset rhythm notation.
+
+    Uses Volkov's notation style:
+    - Fixed polyrhythm using tuplets (ratio directly maps to subdivision)
+    - Dynamic hairpins (ff → n for fade out, n → ff for fade in)
+    - Start/end tempo markings
+    - Repeat signs for looping
+    """
+
+    # Normalize ratio so we know which layer has more notes per beat
+    ratio_value = ratio_num / ratio_den
+    if ratio_value < 1:
+        ratio_value = 1 / ratio_value
+        layer1_div = ratio_den  # Layer 1 subdivision (notes per beat)
+        layer2_div = ratio_num  # Layer 2 subdivision
+    else:
+        layer1_div = ratio_num
+        layer2_div = ratio_den
+
+    # Calculate tempos
+    if direction == "accel":
+        start_tempo = bpm
+        end_tempo = bpm * ratio_value
+        tempo_text = "accel."
+    else:
+        start_tempo = bpm
+        end_tempo = bpm / ratio_value
+        tempo_text = "rit."
+
+    def make_tuplet_beat(n):
+        """Generate one beat of n-tuplet notes."""
+        if n == 1:
+            return "c'4"
+        elif n == 2:
+            return "c'8 c'"
+        elif n == 3:
+            return "\\tuplet 3/2 { c'8 c' c' }"
+        elif n == 4:
+            return "c'16 c' c' c'"
+        elif n == 5:
+            return "\\tuplet 5/4 { c'16 c' c' c' c' }"
+        elif n == 6:
+            return "\\tuplet 6/4 { c'16 c' c' c' c' c' }"
+        elif n == 7:
+            return "\\tuplet 7/4 { c'16 c' c' c' c' c' c' }"
+        elif n == 8:
+            return "c'32 c' c' c' c' c' c' c'"
+        else:
+            # Fallback for unusual divisions
+            return "\\tuplet {}/4 {{ {} }}".format(n, " ".join(["c'16"] * n))
+
+    # Generate 8 beats (2 measures of 4/4) of each layer
+    num_beats = 8
+    layer1_beat = make_tuplet_beat(layer1_div)
+    layer2_beat = make_tuplet_beat(layer2_div)
+
+    layer1_notes = " ".join([layer1_beat for _ in range(num_beats)])
+    layer2_notes = " ".join([layer2_beat for _ in range(num_beats)])
+
+    # Build LilyPond file
+    display_ratio = f"{max(layer1_div, layer2_div)}:{min(layer1_div, layer2_div)}"
+    direction_name = "Accelerando" if direction == "accel" else "Ritardando"
+
+    ly_content = f'''\\version "2.24.0"
+
+\\header {{
+  tagline = ##f
+}}
+
+\\paper {{
+  #(set-paper-size "a4" 'landscape)
+  indent = 2.5\\cm
+  top-margin = 1\\cm
+  bottom-margin = 1\\cm
+  left-margin = 1\\cm
+  right-margin = 1\\cm
+  system-system-spacing.basic-distance = #14
+}}
+
+\\score {{
+  <<
+    \\new RhythmicStaff \\with {{
+      instrumentName = "Layer 1"
+    }} {{
+      \\time {time_sig_num}/{time_sig_den}
+      \\override Score.RehearsalMark.self-alignment-X = #LEFT
+      \\mark \\markup {{ \\concat {{ \\smaller \\general-align #Y #DOWN \\note {{4}} #1 " = {int(start_tempo)} {tempo_text}" }} }}
+      \\repeat volta 2 {{
+        {layer1_notes}
+      }}
+      \\once \\override Score.RehearsalMark.self-alignment-X = #RIGHT
+      \\once \\override Score.RehearsalMark.direction = #UP
+      \\mark \\markup {{ \\concat {{ \\smaller \\general-align #Y #DOWN \\note {{4}} #1 " = {int(end_tempo)}" }} }}
+    }}
+    \\new Dynamics {{
+      s1\\ff\\> s1 s1 s1\\n
+    }}
+    \\new RhythmicStaff \\with {{
+      instrumentName = "Layer 2"
+    }} {{
+      \\time {time_sig_num}/{time_sig_den}
+      \\repeat volta 2 {{
+        {layer2_notes}
+      }}
+    }}
+    \\new Dynamics {{
+      s1\\n\\< s1 s1 s1\\ff
+    }}
+  >>
+  \\layout {{
+    \\context {{
+      \\Score
+      \\override SpacingSpanner.base-shortest-duration = #(ly:make-moment 1/16)
+    }}
+  }}
+}}
+'''
+
+    with open(output_file, "w") as f:
+        f.write(ly_content)
+
+    print(f"Generated LilyPond: {output_file}")
 
 
 def generate_risset_rhythm(
@@ -320,6 +459,13 @@ def generate_risset_rhythm(
     print(f"  Layer 1: {layer1_start:.1f} → {layer1_end:.1f} BPM (fades out)")
     print(f"  Layer 2: {layer2_start:.1f} → {layer2_end:.1f} BPM (fades in)")
 
+    # Return data for LilyPond generation
+    return {
+        "layer1_times": layer1_times,
+        "layer2_times": layer2_times,
+        "metabar_beats": metabar_beats
+    }
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -345,6 +491,8 @@ if __name__ == "__main__":
                         help="Output file (default: auto-generated from parameters)")
     parser.add_argument("--ramp", action="store_true",
                         help="Ramp mode: output 1 metabar (default is arc: 2 metabars)")
+    parser.add_argument("--lilypond", action="store_true",
+                        help="Also generate LilyPond notation file (.ly)")
 
     args = parser.parse_args()
 
@@ -390,7 +538,7 @@ if __name__ == "__main__":
     else:
         output_file = args.output
 
-    generate_risset_rhythm(
+    result = generate_risset_rhythm(
         time_sig_num=time_sig_num,
         time_sig_den=time_sig_den,
         bpm=args.bpm,
@@ -403,3 +551,20 @@ if __name__ == "__main__":
         output_file=output_file,
         ramp=args.ramp
     )
+
+    # Generate LilyPond file if requested
+    if args.lilypond:
+        ly_file = output_file.replace(".mid", ".ly")
+        generate_lilypond(
+            layer1_times=result["layer1_times"],
+            layer2_times=result["layer2_times"],
+            metabar_beats=result["metabar_beats"],
+            time_sig_num=time_sig_num,
+            time_sig_den=time_sig_den,
+            bpm=args.bpm,
+            ratio_num=ratio_num,
+            ratio_den=ratio_den,
+            direction=args.direction,
+            output_file=ly_file,
+            ramp=args.ramp
+        )
