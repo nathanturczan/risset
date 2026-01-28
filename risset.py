@@ -169,22 +169,31 @@ def generate_risset_rhythm(
     direction="accel",
     note_pitch_low=60,
     note_pitch_high=64,
-    output_file="risset.mid"
+    output_file="risset.mid",
+    ramp=False
 ):
     """
     Generate a Risset rhythm MIDI file with two layers.
 
-    Output is 2 meta-bars with pitches swapped in the second,
-    revealing the continuous lines:
-      - Top row: Layer 2 (bar 1) → Layer 1 (bar 2)
-      - Bottom row: Layer 1 (bar 1) → Layer 2 (bar 2)
+    Arc mode (default): 2 meta-bars, each voice completes a full fade arc.
+      - More musical, complete statement
+      - Each pitch: quiet → loud → quiet (or vice versa)
 
-    Loop just meta-bar 1 for the seamless Risset illusion.
+    Ramp mode (--ramp): 1 meta-bar, a building block for composition.
+      - One pitch fading out, one fading in
+      - Use for transitions, stacking, layering
     """
 
-    # Calculate total duration in beats
+    # Calculate duration in beats
     beats_per_measure = time_sig_num * (4.0 / time_sig_den)
-    total_beats = beats_per_measure * num_measures
+    total_output_beats = beats_per_measure * num_measures
+
+    # Arc mode: 2 meta-bars, so each meta-bar is half the output
+    # Ramp mode: 1 meta-bar, so meta-bar equals full output
+    if ramp:
+        meta_bar_beats = total_output_beats
+    else:
+        meta_bar_beats = total_output_beats / 2
 
     # Calculate ratio - normalize to >= 1 so multiply = faster, divide = slower
     ratio_value = ratio_num / ratio_den
@@ -199,8 +208,8 @@ def generate_risset_rhythm(
     midi.addTimeSignature(track, 0, time_sig_num, int(math.log2(time_sig_den)), 24, 8)
 
     # Generate layer times using independent layer approach for both directions
-    # Layer 1: forward from t=0 (guaranteed loud note at start of bar 2)
-    # Layer 2: backward from total_beats (guaranteed loud note at end of bar 1)
+    # Layer 1: forward from t=0 (guaranteed loud note at start)
+    # Layer 2: backward from meta_bar_beats (guaranteed loud note at end)
     # This ensures consistent, predictable behavior regardless of ratio or measure count
 
     if direction == "accel":
@@ -216,8 +225,8 @@ def generate_risset_rhythm(
         layer2_start_tempo = bpm * ratio_value
         layer2_end_tempo = bpm
 
-    layer1_times = generate_layer_times_forward(total_beats, bpm, layer1_start_tempo, layer1_end_tempo)
-    layer2_times = generate_layer_times_backward(total_beats, bpm, layer2_start_tempo, layer2_end_tempo)
+    layer1_times = generate_layer_times_forward(meta_bar_beats, bpm, layer1_start_tempo, layer1_end_tempo)
+    layer2_times = generate_layer_times_backward(meta_bar_beats, bpm, layer2_start_tempo, layer2_end_tempo)
 
     # Determine display tempos for output
     if direction == "accel":
@@ -253,9 +262,9 @@ def generate_risset_rhythm(
         for i, t in enumerate(times):
             if i < len(times) - 1:
                 next_time = times[i + 1]
-                duration = min((next_time - t) * 0.8, total_beats - t - min_end_gap)
+                duration = min((next_time - t) * 0.8, meta_bar_beats - t - min_end_gap)
             else:
-                duration = min(1.0, total_beats - t - min_end_gap)
+                duration = min(1.0, meta_bar_beats - t - min_end_gap)
 
             if duration > 0.01:
                 valid_notes.append((t, duration))
@@ -289,23 +298,23 @@ def generate_risset_rhythm(
     add_layer_notes(layer1_times, note_pitch_low, fade_out=True, time_offset=0)
     add_layer_notes(layer2_times, note_pitch_high, fade_out=False, time_offset=0)
 
-    # Meta-bar 2: pitches swapped to reveal continuous lines
-    # Layer 1 on HIGH pitch, Layer 2 on LOW pitch
-    add_layer_notes(layer1_times, note_pitch_high, fade_out=True, time_offset=total_beats)
-    add_layer_notes(layer2_times, note_pitch_low, fade_out=False, time_offset=total_beats)
+    # Meta-bar 2 (arc mode only): pitches swapped to reveal continuous lines
+    if not ramp:
+        add_layer_notes(layer1_times, note_pitch_high, fade_out=True, time_offset=meta_bar_beats)
+        add_layer_notes(layer2_times, note_pitch_low, fade_out=False, time_offset=meta_bar_beats)
 
     # Write file
     with open(output_file, "wb") as f:
         midi.writeFile(f)
 
-    actual_beats = total_beats * 2
-    actual_measures = num_measures * 2
-    duration_seconds = (actual_beats / bpm) * 60.0
+    duration_seconds = (total_output_beats / bpm) * 60.0
+    mode_str = "ramp" if ramp else "arc"
 
     print(f"Generated: {output_file}")
+    print(f"  Mode: {mode_str}")
     print(f"  Time signature: {time_sig_num}/{time_sig_den}")
     print(f"  Base tempo: {bpm} BPM")
-    print(f"  Duration: {actual_measures} measures ({actual_beats} beats, {duration_seconds:.2f} sec)")
+    print(f"  Duration: {num_measures} measures ({total_output_beats} beats, {duration_seconds:.2f} sec)")
     print(f"  Ratio: {ratio_num}/{ratio_den} ({ratio_value:.3f})")
     print(f"  Direction: {direction}")
     print(f"  Layer 1: {layer1_start:.1f} → {layer1_end:.1f} BPM (fades out)")
@@ -334,6 +343,8 @@ if __name__ == "__main__":
                         help="MIDI note for faster layer (default: 64)")
     parser.add_argument("-o", "--output", type=str, default=None,
                         help="Output file (default: auto-generated from parameters)")
+    parser.add_argument("--ramp", action="store_true",
+                        help="Ramp mode: output 1 meta-bar (default is arc: 2 meta-bars)")
 
     args = parser.parse_args()
 
@@ -374,7 +385,8 @@ if __name__ == "__main__":
     # Generate default filename with metadata if not specified
     if args.output is None:
         bpm_str = f"{int(args.bpm)}bpm" if args.bpm == int(args.bpm) else f"{args.bpm}bpm"
-        output_file = f"risset_{bpm_str}_{ratio_num}-{ratio_den}_{args.direction}_{args.measures}m.mid"
+        mode_str = "_ramp" if args.ramp else ""
+        output_file = f"risset_{bpm_str}_{ratio_num}-{ratio_den}_{args.direction}_{args.measures}m{mode_str}.mid"
     else:
         output_file = args.output
 
@@ -388,5 +400,6 @@ if __name__ == "__main__":
         direction=args.direction,
         note_pitch_low=args.pitch_low,
         note_pitch_high=args.pitch_high,
-        output_file=output_file
+        output_file=output_file,
+        ramp=args.ramp
     )

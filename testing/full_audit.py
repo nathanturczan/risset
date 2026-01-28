@@ -45,8 +45,8 @@ def analyze_seam(filepath, total_beats):
 
     pitch_low, pitch_high = pitches[0], pitches[-1]
 
-    # In unfold mode, seam is at total_beats
-    # High pitch = Layer 2 (bar 1) -> Layer 1 (bar 2)
+    # In arc mode, seam is at seam_beats (midpoint of output)
+    # High pitch = Layer 2 (meta-bar 1) -> Layer 1 (meta-bar 2)
     layer_high = [(t, v, d) for t, p, v, d in notes if p == pitch_high]
     layer_low = [(t, v, d) for t, p, v, d in notes if p == pitch_low]
 
@@ -105,8 +105,9 @@ def run_test(ratio_num, ratio_den, direction, measures, bpm=120):
         return {"error": result.stderr}
 
     total_beats = measures * 4  # Assuming 4/4
+    seam_beats = total_beats / 2  # Arc mode: seam is at midpoint
 
-    analysis = analyze_seam(output_file, total_beats)
+    analysis = analyze_seam(output_file, seam_beats)
 
     # Clean up
     os.unlink(output_file)
@@ -170,7 +171,7 @@ def main():
 
     for measures in measure_counts:
         print(f"\n{'=' * 80}")
-        print(f"TESTING {measures} MEASURES (seam at beat {measures * 4})")
+        print(f"TESTING {measures} MEASURES (seam at beat {measures * 2})")
         print("=" * 80)
 
         for direction in directions:
