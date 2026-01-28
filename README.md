@@ -1,8 +1,16 @@
 # risset
 
-**MIDI generator for Shepard-like rhythmic illusions**
+**Polyrhythmic Risset rhythm generator**
 
-Creates seamless accelerando/ritardando loops using velocity crossfades between two layers.
+Creates MIDI files that produce the illusion of perpetual acceleration or deceleration, extending Jean-Claude Risset's "eternal accelerando" to support arbitrary tempo ratios.
+
+## Background
+
+The Risset rhythm is the temporal equivalent of Shepard tones. Multiple streams play the same pattern at different tempos, with amplitude crossfades creating the perception of continuous tempo change. When looped, the rhythm appears to accelerate (or decelerate) forever.
+
+A **metabar** is the fundamental loopable unit of a Risset rhythm—the period over which the tempo doubles (or halves) and all stream phases return to their starting state (Stowell, 2011).
+
+Traditional Risset rhythms use **tempo octaves** (2:1 ratio between streams). This tool extends the technique to support **polyrhythmic ratios** like 3:2, 5:4, or 7:5, creating new rhythmic textures while preserving the perpetual tempo illusion.
 
 ## Quick Start
 
@@ -11,87 +19,60 @@ pip install midiutil
 python risset.py --ratio 2/1 --direction accel --measures 8
 ```
 
-## What It Does
+## How It Works
 
-Two layers play the same rhythm at different tempos, crossfading via velocity:
+Two layers play at different tempos with opposing velocity curves:
+- **Layer 1** fades out (velocity 127→1) while accelerating
+- **Layer 2** fades in (velocity 1→127) at a slower tempo
 
-```
-                    ARC MODE (default) - 8 measures
-    ┌─────────────── meta-bar 1 ───────────────┬─────────────── meta-bar 2 ───────────────┐
-    │                                          │                                          │
-    │  Layer 1 (C3): 120→240 BPM               │  Layer 1 (E3): 120→240 BPM               │
-    │  ████████████████████░░░░░░░░░░░░░░░░░░  │  ████████████████████░░░░░░░░░░░░░░░░░░  │
-    │  vel 127━━━━━━━━━━━━━━━━━━━━━━━━━━━━▸1   │  vel 127━━━━━━━━━━━━━━━━━━━━━━━━━━━━▸1   │
-    │                                          │                                          │
-    │  Layer 2 (E3): 60→120 BPM                │  Layer 2 (C3): 60→120 BPM                │
-    │  ░░░░░░░░░░░░░░░░░░████████████████████  │  ░░░░░░░░░░░░░░░░░░████████████████████  │
-    │  vel 1━━━━━━━━━━━━━━━━━━━━━━━━━━━━▸120   │  vel 1━━━━━━━━━━━━━━━━━━━━━━━━━━━━▸120   │
-    │                                          │                                          │
-    └──────────────────────────────────────────┴──────────────────────────────────────────┘
-                                               ▲
-                                            seam (pitches swap)
+At the metabar boundary, the fading-in layer has reached the starting tempo of the fading-out layer, creating a seamless loop.
 
-    Each pitch completes a full arc: loud → quiet → loud (or quiet → loud → quiet)
-```
+## Output Modes
 
-```
-                    RAMP MODE (--ramp) - 4 measures
-    ┌─────────────────────── meta-bar 1 ───────────────────────┐
-    │                                                          │
-    │  Layer 1 (C3): 120→240 BPM                               │
-    │  ████████████████████░░░░░░░░░░░░░░░░░░                   │
-    │  vel 127━━━━━━━━━━━━━━━━━━━━━━━━━━━━▸1                    │
-    │                                                          │
-    │  Layer 2 (E3): 60→120 BPM                                │
-    │  ░░░░░░░░░░░░░░░░░░████████████████████                   │
-    │  vel 1━━━━━━━━━━━━━━━━━━━━━━━━━━━━▸120                    │
-    │                                                          │
-    └──────────────────────────────────────────────────────────┘
-
-    One pitch fading out, one fading in. A building block for composition.
-```
-
-## Arc vs Ramp
-
-| Mode | Output | Use Case |
-|------|--------|----------|
-| **Arc** (default) | 2 meta-bars | Complete musical statement. Each pitch has a full fade journey. |
-| **Ramp** (`--ramp`) | 1 meta-bar | Building block. Stack, layer, use for transitions. |
+| Mode | Output | Description |
+|------|--------|-------------|
+| **Arc** (default) | 2 metabars | Each pitch completes a full velocity arc. Pitches swap at the seam. |
+| **Ramp** (`--ramp`) | 1 metabar | Single crossfade. Building block for composition. |
 
 `--measures` always equals your output length.
 
 ## Usage
 
 ```bash
-# Arc mode: 8 measures (two 4-measure meta-bars)
+# Classic 2:1 acceleration (8 measures)
 python risset.py --ratio 2/1 --direction accel --measures 8
 
-# Ramp mode: 4 measures (one 4-measure meta-bar)
-python risset.py --ratio 2/1 --direction accel --measures 4 --ramp
+# Polyrhythmic 3:2 acceleration
+python risset.py --ratio 3/2 --direction accel --measures 8
 
 # Deceleration
 python risset.py --ratio 2/1 --direction decel --measures 8
 
-# Different ratio (3:2 polyrhythm)
-python risset.py --ratio 3/2 --direction accel --measures 8
+# Single metabar (ramp mode)
+python risset.py --ratio 2/1 --direction accel --measures 4 --ramp
 ```
 
 ## Parameters
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `--ratio` | 2/1 | Speed ratio between layers |
+| `--ratio` | 2/1 | Tempo ratio between layers |
 | `--direction` | (required) | `accel` or `decel` |
 | `--measures` | 4 | Output length in measures |
 | `--bpm` | 120 | Base tempo |
-| `--ramp` | off | Use ramp mode (1 meta-bar) |
+| `--ramp` | off | Output single metabar |
 | `--pitch-low` | 60 | MIDI note for layer 1 |
 | `--pitch-high` | 64 | MIDI note for layer 2 |
 | `-o` | auto | Output filename |
 
 ## Examples
 
-See the `examples/` folder for ready-to-use MIDI files.
+See the `examples/` folder for ready-to-use MIDI files covering common ratios.
+
+## References
+
+- Stowell, D. (2011). "Scheduling and Composing with Risset Eternal Accelerando Rhythms." *Proceedings of the International Computer Music Conference*.
+- Risset, J.C. (1986). "Pitch and rhythm paradoxes." *Journal of the Acoustical Society of America*, 80(3), 961-962.
 
 ## License
 

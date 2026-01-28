@@ -2,7 +2,7 @@
 
 This folder contains 20 ready-to-use Risset rhythm MIDI files covering common polyrhythmic ratios.
 
-All files are generated at 120 BPM, 4/4 time, 8 measures (arc mode). Each file contains 2 meta-bars with pitches swapped in meta-bar 2, completing the full velocity arc for each pitch.
+All files are generated at 120 BPM, 4/4 time, 8 measures (arc mode). Each file contains 2 metabars with pitches swapped in metabar 2, completing the full velocity arc for each pitch.
 
 ## File List
 
@@ -48,7 +48,7 @@ All files are generated at 120 BPM, 4/4 time, 8 measures (arc mode). Each file c
 
 ## Usage
 
-Import any file into your DAW. Each file contains two meta-bars:
+Import any file into your DAW. Each file contains two metabars:
 - **Meta-bar 1**: One pitch fading out, one fading in
 - **Meta-bar 2**: Pitches swapped, completing each pitch's full velocity arc
 
@@ -60,7 +60,7 @@ For a seamless perpetual Risset illusion, loop the full 8 measures.
 # Arc mode (default): 8 measures output
 python risset.py --ratio 2/1 --direction accel --measures 8
 
-# Ramp mode: 4 measures output (single meta-bar)
+# Ramp mode: 4 measures output (single metabar)
 python risset.py --ratio 2/1 --direction accel --measures 4 --ramp
 
 # Different tempo

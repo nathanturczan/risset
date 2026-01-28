@@ -78,7 +78,7 @@ def generate_layer_times_backward(total_beats, base_bpm, start_tempo, end_tempo)
 
 def generate_continuous_line_times(total_beats, base_bpm, ratio_value, direction):
     """
-    Generate the continuous line spanning 2 meta-bars.
+    Generate the continuous line spanning 2 metabars.
     This is the "ground truth" that gets split into two layers.
 
     For decel: tempo goes fast → base → slow
@@ -175,11 +175,11 @@ def generate_risset_rhythm(
     """
     Generate a Risset rhythm MIDI file with two layers.
 
-    Arc mode (default): 2 meta-bars, each voice completes a full fade arc.
+    Arc mode (default): 2 metabars, each voice completes a full fade arc.
       - More musical, complete statement
       - Each pitch: quiet → loud → quiet (or vice versa)
 
-    Ramp mode (--ramp): 1 meta-bar, a building block for composition.
+    Ramp mode (--ramp): 1 metabar, a building block for composition.
       - One pitch fading out, one fading in
       - Use for transitions, stacking, layering
     """
@@ -188,12 +188,12 @@ def generate_risset_rhythm(
     beats_per_measure = time_sig_num * (4.0 / time_sig_den)
     total_output_beats = beats_per_measure * num_measures
 
-    # Arc mode: 2 meta-bars, so each meta-bar is half the output
-    # Ramp mode: 1 meta-bar, so meta-bar equals full output
+    # Arc mode: 2 metabars, so each metabar is half the output
+    # Ramp mode: 1 metabar, so metabar equals full output
     if ramp:
-        meta_bar_beats = total_output_beats
+        metabar_beats = total_output_beats
     else:
-        meta_bar_beats = total_output_beats / 2
+        metabar_beats = total_output_beats / 2
 
     # Calculate ratio - normalize to >= 1 so multiply = faster, divide = slower
     ratio_value = ratio_num / ratio_den
@@ -209,7 +209,7 @@ def generate_risset_rhythm(
 
     # Generate layer times using independent layer approach for both directions
     # Layer 1: forward from t=0 (guaranteed loud note at start)
-    # Layer 2: backward from meta_bar_beats (guaranteed loud note at end)
+    # Layer 2: backward from metabar_beats (guaranteed loud note at end)
     # This ensures consistent, predictable behavior regardless of ratio or measure count
 
     if direction == "accel":
@@ -225,8 +225,8 @@ def generate_risset_rhythm(
         layer2_start_tempo = bpm * ratio_value
         layer2_end_tempo = bpm
 
-    layer1_times = generate_layer_times_forward(meta_bar_beats, bpm, layer1_start_tempo, layer1_end_tempo)
-    layer2_times = generate_layer_times_backward(meta_bar_beats, bpm, layer2_start_tempo, layer2_end_tempo)
+    layer1_times = generate_layer_times_forward(metabar_beats, bpm, layer1_start_tempo, layer1_end_tempo)
+    layer2_times = generate_layer_times_backward(metabar_beats, bpm, layer2_start_tempo, layer2_end_tempo)
 
     # Determine display tempos for output
     if direction == "accel":
@@ -262,9 +262,9 @@ def generate_risset_rhythm(
         for i, t in enumerate(times):
             if i < len(times) - 1:
                 next_time = times[i + 1]
-                duration = min((next_time - t) * 0.8, meta_bar_beats - t - min_end_gap)
+                duration = min((next_time - t) * 0.8, metabar_beats - t - min_end_gap)
             else:
-                duration = min(1.0, meta_bar_beats - t - min_end_gap)
+                duration = min(1.0, metabar_beats - t - min_end_gap)
 
             if duration > 0.01:
                 valid_notes.append((t, duration))
@@ -300,8 +300,8 @@ def generate_risset_rhythm(
 
     # Meta-bar 2 (arc mode only): pitches swapped to reveal continuous lines
     if not ramp:
-        add_layer_notes(layer1_times, note_pitch_high, fade_out=True, time_offset=meta_bar_beats)
-        add_layer_notes(layer2_times, note_pitch_low, fade_out=False, time_offset=meta_bar_beats)
+        add_layer_notes(layer1_times, note_pitch_high, fade_out=True, time_offset=metabar_beats)
+        add_layer_notes(layer2_times, note_pitch_low, fade_out=False, time_offset=metabar_beats)
 
     # Write file
     with open(output_file, "wb") as f:
@@ -344,7 +344,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output", type=str, default=None,
                         help="Output file (default: auto-generated from parameters)")
     parser.add_argument("--ramp", action="store_true",
-                        help="Ramp mode: output 1 meta-bar (default is arc: 2 meta-bars)")
+                        help="Ramp mode: output 1 metabar (default is arc: 2 metabars)")
 
     args = parser.parse_args()
 
