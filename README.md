@@ -1,16 +1,16 @@
 # risset
 
-**Polyrhythmic Risset rhythm generator**
+**Polyrhythmic Risset rhythm MIDI generator**
 
-Creates MIDI files that produce the illusion of perpetual acceleration or deceleration, extending Jean-Claude Risset's "eternal accelerando" to support arbitrary tempo ratios.
+Creates MIDI files that produce the illusion of perpetual acceleration or deceleration using Risset rhythms with arbitrary tempo ratios.
 
 ## Background
 
 The Risset rhythm is the temporal equivalent of Shepard tones. Multiple streams play the same pattern at different tempos, with amplitude crossfades creating the perception of continuous tempo change. When looped, the rhythm appears to accelerate (or decelerate) forever.
 
-A **metabar** is the fundamental loopable unit of a Risset rhythm—the period over which the tempo doubles (or halves) and all stream phases return to their starting state (Stowell, 2011).
+A **metabar** is the fundamental loopable unit of a Risset rhythm—the period over which the perceived tempo changes by the given ratio and all stream phases return to their starting state (Stowell, 2011).
 
-Traditional Risset rhythms use **tempo octaves** (2:1 ratio between streams). This tool extends the technique to support **polyrhythmic ratios** like 3:2, 5:4, or 7:5, creating new rhythmic textures while preserving the perpetual tempo illusion.
+Traditional Risset rhythms use **tempo octaves** (2:1 ratio). **Polyrhythmic Risset rhythms** extend this to arbitrary ratios like 3:2, 5:4, or 3:5, as explored by Dmitri Volkov (2023).
 
 ## Quick Start
 
@@ -22,8 +22,8 @@ python risset.py --ratio 2/1 --direction accel --measures 8
 ## How It Works
 
 Two layers play at different tempos with opposing velocity curves:
-- **Layer 1** fades out (velocity 127→1) while accelerating
-- **Layer 2** fades in (velocity 1→127) at a slower tempo
+- **Layer 1** fades out (velocity 127→1) while its tempo changes
+- **Layer 2** fades in (velocity 1→127) at a different tempo
 
 At the metabar boundary, the fading-in layer has reached the starting tempo of the fading-out layer, creating a seamless loop.
 
@@ -45,8 +45,8 @@ python risset.py --ratio 2/1 --direction accel --measures 8
 # Polyrhythmic 3:2 acceleration
 python risset.py --ratio 3/2 --direction accel --measures 8
 
-# Deceleration
-python risset.py --ratio 2/1 --direction decel --measures 8
+# Deceleration with 3:5 ratio
+python risset.py --ratio 3/5 --direction decel --measures 8
 
 # Single metabar (ramp mode)
 python risset.py --ratio 2/1 --direction accel --measures 4 --ramp
@@ -73,6 +73,7 @@ See the `examples/` folder for ready-to-use MIDI files covering common ratios.
 
 - Stowell, D. (2011). "Scheduling and Composing with Risset Eternal Accelerando Rhythms." *Proceedings of the International Computer Music Conference*.
 - Risset, J.C. (1986). "Pitch and rhythm paradoxes." *Journal of the Acoustical Society of America*, 80(3), 961-962.
+- Volkov, D. (2023). "Risset Polyrhythm." https://www.dmitrivolkov.com/misc/risset-polyrhythm/
 
 ## License
 
