@@ -27,8 +27,8 @@ Two layers play at different tempos with opposing velocity curves:
 
 At the metabar boundary, the fading-in layer has reached the starting tempo of the fading-out layer, creating a seamless loop.
 
-![Risset 1:2 Accelerando](visualization/piano_rolls/risset_120bpm_2-1_accel_8m_arc.png)
-*Classic 2:1 Risset rhythm (arc mode). Darker = louder. Notice how the velocity crossfade creates the illusion of continuous acceleration.*
+![Risset 1:2 Accelerando](visualization/piano_rolls/risset_120bpm_2-1_accel_8m_ramp.png)
+*Classic 2:1 Risset rhythm (ramp mode). Darker = louder. Notice how the velocity crossfade creates the illusion of continuous acceleration.*
 
 ## Output Modes
 
@@ -78,8 +78,11 @@ python risset.py --ratio 2/1 --direction accel --measures 4 --ramp
 
 See the `examples/` folder for ready-to-use MIDI files covering common ratios.
 
-**Polyrhythmic 5:4 Decelerando:**
-![5:4 Decelerando](visualization/piano_rolls/risset_120bpm_5-4_decel_8m_arc.png)
+**Polyrhythmic 5:4 Decelerando (arc):**
+![5:4 Decelerando Arc](visualization/piano_rolls/risset_120bpm_5-4_decel_8m_arc.png)
+
+**Polyrhythmic 5:4 Decelerando (ramp):**
+![5:4 Decelerando Ramp](visualization/piano_rolls/risset_120bpm_5-4_decel_8m_ramp.png)
 
 ## References
 
