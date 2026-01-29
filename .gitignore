@@ -28,9 +28,13 @@ Thumbs.db
 # Test output folders
 7 measure test/
 8 measure test/
-visualization/notation/
 visualization/tuplet_brackets/
 examples/audio/*.mp3
+
+# Notation outputs (keep scripts, ignore generated files)
+visualization/notation/*.ly
+visualization/notation/*.mid
+visualization/notation/*.png
 
 # Piano rolls - ignore all except those used in README
 visualization/piano_rolls/*
