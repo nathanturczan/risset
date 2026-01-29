@@ -187,9 +187,9 @@ def generate_piano_roll(midi_path, output_path, ratio_num, ratio_den, direction,
 
 
 def main():
-    """Generate piano rolls for all MIDI files in examples/."""
+    """Generate piano rolls for all MIDI files in examples/midi/."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    examples_dir = os.path.join(script_dir, '..', 'examples')
+    examples_dir = os.path.join(script_dir, '..', 'examples', 'midi')
     output_dir = os.path.join(script_dir, 'piano_rolls')
 
     os.makedirs(output_dir, exist_ok=True)

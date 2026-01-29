@@ -12,7 +12,7 @@ build/
 
 # MIDI output files
 *.mid
-!examples/*.mid
+!examples/midi/*.mid
 
 # IDE
 .vscode/
@@ -30,6 +30,7 @@ Thumbs.db
 8 measure test/
 visualization/notation/
 visualization/tuplet_brackets/
+examples/audio/*.mp3
 
 # Piano rolls - ignore all except those used in README
 visualization/piano_rolls/*
