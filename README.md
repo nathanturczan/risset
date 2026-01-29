@@ -84,6 +84,12 @@ See the `examples/` folder for ready-to-use MIDI files covering common ratios.
 **Polyrhythmic 5:4 Decelerando (ramp):**
 ![5:4 Decelerando Ramp](visualization/piano_rolls/risset_120bpm_5-4_decel_8m_ramp.png)
 
+## Ableton Live 12 Integration
+
+A Max for Live MIDI Tool Generator is available in the `ableton/` folder. This lets you generate Risset rhythm patterns directly into MIDI clips within Ableton Live 12.
+
+See [`ableton/README.md`](ableton/README.md) for installation and usage instructions.
+
 ## References
 
 - Stowell, D. (2011). "Scheduling and Composing with Risset Eternal Accelerando Rhythms." *Proceedings of the International Computer Music Conference*.
