@@ -29,4 +29,10 @@ Thumbs.db
 7 measure test/
 8 measure test/
 visualization/notation/
-visualization/piano_rolls/
+
+# Piano rolls - ignore all except those used in README
+visualization/piano_rolls/*
+!visualization/piano_rolls/risset_120bpm_2-1_accel_8m_arc.png
+!visualization/piano_rolls/risset_120bpm_3-2_accel_8m_arc.png
+!visualization/piano_rolls/risset_120bpm_3-2_accel_8m_ramp.png
+!visualization/piano_rolls/risset_120bpm_5-4_decel_8m_arc.png

@@ -7,12 +7,9 @@ Creates PNG images showing:
 - Velocity as color intensity
 - Measure lines
 - Tempo marking (120 BPM)
-- Tuplet brackets showing polyrhythmic groupings
-- "Quarter note ≠ rectangle" indicator
 """
 
 import os
-import re
 from mido import MidiFile
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -72,9 +69,12 @@ def parse_filename(filename):
     return ratio_num, ratio_den, direction
 
 
-def generate_piano_roll(midi_path, output_path, ratio_num, ratio_den, direction):
+def generate_piano_roll(midi_path, output_path, ratio_num, ratio_den, direction, max_beats=None):
     """
     Generate a piano roll PNG for a Risset rhythm MIDI file.
+
+    Args:
+        max_beats: If specified, only show notes up to this beat (for ramp mode).
     """
     notes = parse_midi_notes(midi_path)
 
@@ -82,18 +82,27 @@ def generate_piano_roll(midi_path, output_path, ratio_num, ratio_den, direction)
         print(f"No notes found in {midi_path}")
         return False
 
+    # Filter notes if max_beats specified (for ramp mode)
+    if max_beats is not None:
+        notes = [(start, pitch, vel, min(dur, max_beats - start))
+                 for start, pitch, vel, dur in notes
+                 if start < max_beats]
+
     # Get unique pitches and sort them
     pitches = sorted(set(n[1] for n in notes))
     pitch_to_row = {p: i for i, p in enumerate(pitches)}
 
     # Determine total duration
-    max_time = max(n[0] + n[3] for n in notes)
-    total_beats = np.ceil(max_time / 4) * 4  # Round up to nearest 4 beats
+    if max_beats is not None:
+        total_beats = max_beats
+    else:
+        max_time = max(n[0] + n[3] for n in notes)
+        total_beats = np.ceil(max_time / 4) * 4  # Round up to nearest 4 beats
     num_measures = int(total_beats / 4)
 
-    # Create figure with extra space for brackets and legend
+    # Create figure
     fig_width = max(12, num_measures * 2.5)
-    fig_height = 3.5
+    fig_height = 3.0
     fig, ax = plt.subplots(figsize=(fig_width, fig_height))
 
     # Color map for velocity (light pink to dark red)
@@ -143,9 +152,9 @@ def generate_piano_roll(midi_path, output_path, ratio_num, ratio_den, direction)
     ax.set_xticklabels([str(m + 1) for m in range(num_measures + 1)], fontsize=10)
     ax.set_xlabel('Measure', fontsize=11)
 
-    # Set limits with extra space for brackets
-    ax.set_xlim(-0.5, total_beats + 0.5)
-    ax.set_ylim(-0.5, len(pitches) + 0.5)
+    # Set limits
+    ax.set_xlim(0, total_beats)
+    ax.set_ylim(0, len(pitches))
 
     # Format ratio based on direction
     # Accel: low:high (speeding up), Decel: high:low (slowing down)
@@ -156,44 +165,9 @@ def generate_piano_roll(midi_path, output_path, ratio_num, ratio_den, direction)
         display_ratio = f"{max(ratio_num, ratio_den)}:{min(ratio_num, ratio_den)}"
         direction_name = "Decelerando"
 
-    # Title with tempo and "≠" indicator
+    # Title with tempo
     title_text = f"Risset {display_ratio} {direction_name}"
-    ax.set_title(f"{title_text}\n♩ = 120 BPM    ♩ ≠ █", fontsize=14, fontweight='bold')
-
-    # Add tuplet brackets
-    # Top bracket for E3 (higher pitch = row 1)
-    # Bottom bracket for C3 (lower pitch = row 0)
-    bracket_y_top = len(pitches) + 0.15
-    bracket_y_bottom = -0.35
-
-    # Determine which number goes where based on the ratio
-    # The faster layer (more notes) gets the higher number
-    if direction == 'accel':
-        # E3 (top) fades out, starts at base tempo
-        # C3 (bottom) fades in, starts slower
-        top_num = min(ratio_num, ratio_den)  # fewer notes initially
-        bottom_num = max(ratio_num, ratio_den)  # more notes
-    else:
-        # E3 (top) fades out, starts at base tempo
-        # C3 (bottom) fades in, starts faster
-        top_num = max(ratio_num, ratio_den)  # more notes initially
-        bottom_num = min(ratio_num, ratio_den)  # fewer notes
-
-    # Draw top bracket with number (for first measure only, as reference)
-    bracket_width = 4  # One measure
-    # Top bracket: ┌ n ┐
-    ax.plot([0, 0], [bracket_y_top, bracket_y_top + 0.15], 'k-', linewidth=1.5)
-    ax.plot([0, bracket_width], [bracket_y_top + 0.15, bracket_y_top + 0.15], 'k-', linewidth=1.5)
-    ax.plot([bracket_width, bracket_width], [bracket_y_top + 0.15, bracket_y_top], 'k-', linewidth=1.5)
-    ax.text(bracket_width / 2, bracket_y_top + 0.25, str(top_num),
-            ha='center', va='bottom', fontsize=14, fontweight='bold')
-
-    # Bottom bracket: └ n ┘
-    ax.plot([0, 0], [bracket_y_bottom, bracket_y_bottom - 0.15], 'k-', linewidth=1.5)
-    ax.plot([0, bracket_width], [bracket_y_bottom - 0.15, bracket_y_bottom - 0.15], 'k-', linewidth=1.5)
-    ax.plot([bracket_width, bracket_width], [bracket_y_bottom - 0.15, bracket_y_bottom], 'k-', linewidth=1.5)
-    ax.text(bracket_width / 2, bracket_y_bottom - 0.35, str(bottom_num),
-            ha='center', va='top', fontsize=14, fontweight='bold')
+    ax.set_title(f"{title_text}\n♩ = 120 BPM", fontsize=14, fontweight='bold', pad=10)
 
     # Add colorbar for velocity
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=1, vmax=127))
@@ -231,12 +205,17 @@ def main():
 
     for midi_file in sorted(midi_files):
         midi_path = os.path.join(examples_dir, midi_file)
-        output_name = os.path.splitext(midi_file)[0] + '.png'
-        output_path = os.path.join(output_dir, output_name)
+        base_name = os.path.splitext(midi_file)[0]
 
         ratio_num, ratio_den, direction = parse_filename(midi_file)
         if ratio_num and ratio_den and direction:
-            generate_piano_roll(midi_path, output_path, ratio_num, ratio_den, direction)
+            # Generate arc version (full file, 8 measures = 2 metabars)
+            arc_output = os.path.join(output_dir, f"{base_name}_arc.png")
+            generate_piano_roll(midi_path, arc_output, ratio_num, ratio_den, direction)
+
+            # Generate ramp version (first 4 measures = 1 metabar)
+            ramp_output = os.path.join(output_dir, f"{base_name}_ramp.png")
+            generate_piano_roll(midi_path, ramp_output, ratio_num, ratio_den, direction, max_beats=16)
         else:
             print(f"Skipping {midi_file}: couldn't parse filename")
 
