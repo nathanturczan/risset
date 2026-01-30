@@ -9,6 +9,9 @@
 inlets = 1;
 outlets = 1;
 
+// Create dict once at load time
+var outputDict = new Dict("risset_output");
+
 // Default parameters
 var ratioNum = 3;             // Ratio numerator
 var ratioDen = 2;             // Ratio denominator
@@ -19,6 +22,7 @@ var pitchLow = 60;            // C3
 var pitchHigh = 64;           // E3
 var baseBpm = 120;
 
+
 /**
  * Generate note times for Layer 1 (fades out), starting at t=0.
  */
@@ -26,7 +30,7 @@ function generateLayerTimesForward(totalBeats, baseBpm, startTempo, endTempo) {
     var timeStep = 0.01;
     var currentTime = 0.0;
     var phase = 0.0;
-    var times = [0.0];  // Always start with a note at t=0
+    var times = [0.0];
 
     while (currentTime < totalBeats) {
         var progress = currentTime / totalBeats;
@@ -88,7 +92,6 @@ function createLayerNotes(times, pitch, fadeOut, metabarBeats, timeOffset) {
     var minEndGap = 0.2;
     var notes = [];
 
-    // First pass: calculate durations and filter
     var validNotes = [];
     for (var i = 0; i < times.length; i++) {
         var t = times[i];
@@ -106,18 +109,15 @@ function createLayerNotes(times, pitch, fadeOut, metabarBeats, timeOffset) {
         }
     }
 
-    // Second pass: calculate velocities and create notes
     var nNotes = validNotes.length;
     for (var i = 0; i < nNotes; i++) {
         var noteData = validNotes[i];
         var velocity;
 
         if (fadeOut) {
-            // Fade out: 127 → 1
             var progress = (nNotes > 1) ? i / (nNotes - 1) : 0.0;
             velocity = Math.round(127 - 126 * progress);
         } else {
-            // Fade in: 1 → ~120
             var progress = (nNotes > 1) ? i / nNotes : 0.0;
             velocity = Math.round(1 + 126 * progress);
         }
@@ -136,13 +136,11 @@ function createLayerNotes(times, pitch, fadeOut, metabarBeats, timeOffset) {
 }
 
 /**
- * Generate notes and return as array
+ * Main generation function - called when bang received.
  */
-function generateNotes() {
-    // Use clip duration directly (in beats)
+function generate() {
     var totalOutputBeats = clipDuration;
 
-    // Arc mode: 2 metabars, Ramp mode: 1 metabar
     var metabarBeats;
     if (mode === "ramp") {
         metabarBeats = totalOutputBeats;
@@ -150,10 +148,8 @@ function generateNotes() {
         metabarBeats = totalOutputBeats / 2;
     }
 
-    // Calculate ratio value
     var ratioValue = ratioNum / ratioDen;
 
-    // Calculate tempos for each layer
     var layer1StartTempo, layer1EndTempo, layer2StartTempo, layer2EndTempo;
 
     if (direction === "accel") {
@@ -168,59 +164,29 @@ function generateNotes() {
         layer2EndTempo = baseBpm;
     }
 
-    // Generate layer times
     var layer1Times = generateLayerTimesForward(metabarBeats, baseBpm, layer1StartTempo, layer1EndTempo);
     var layer2Times = generateLayerTimesBackward(metabarBeats, baseBpm, layer2StartTempo, layer2EndTempo);
 
-    // Create all notes
     var allNotes = [];
 
-    // Metabar 1: Layer 1 on low pitch (fades out), Layer 2 on high pitch (fades in)
     var layer1Notes = createLayerNotes(layer1Times, pitchLow, true, metabarBeats, 0);
     var layer2Notes = createLayerNotes(layer2Times, pitchHigh, false, metabarBeats, 0);
     allNotes = allNotes.concat(layer1Notes, layer2Notes);
 
-    // Metabar 2 (arc mode only): pitches swapped
     if (mode !== "ramp") {
         var layer1NotesM2 = createLayerNotes(layer1Times, pitchHigh, true, metabarBeats, metabarBeats);
         var layer2NotesM2 = createLayerNotes(layer2Times, pitchLow, false, metabarBeats, metabarBeats);
         allNotes = allNotes.concat(layer1NotesM2, layer2NotesM2);
     }
 
-    return allNotes;
-}
+    // Clear and rebuild dictionary using setparse for nested data
+    outputDict.clear();
+    outputDict.setparse("notes", JSON.stringify(allNotes));
 
-/**
- * Generate notes directly into a dictionary (for synchronous MIDI Tool response)
- */
-function generateToDict(d) {
-    var allNotes = generateNotes();
-    var result = { notes: allNotes };
-    d.parse(JSON.stringify(result));
-}
-
-/**
- * Main generation function - called when bang received.
- */
-function generate() {
-    var allNotes = generateNotes();
-
-    // Use Max's native Dict with JSON parsing
-    var d = new Dict("risset_output");
-    d.clear();
-
-    // Build the result object and parse it into the Dict
-    var result = { notes: allNotes };
-    d.parse(JSON.stringify(result));
-
-    outlet(0, "dictionary", d.name);
+    outlet(0, "dictionary", outputDict.name);
 }
 
 // Message handlers for parameters
-
-/**
- * Set ratio with numerator and denominator
- */
 function setRatio(num, den) {
     ratioNum = Math.max(1, Math.min(9, num));
     ratioDen = Math.max(1, Math.min(9, den));
@@ -238,9 +204,6 @@ function setMode(m) {
     }
 }
 
-/**
- * Set clip duration in beats (called from live.miditool.in dictionary)
- */
 function setClipDuration(beats) {
     clipDuration = Math.max(1, beats);
 }
@@ -257,26 +220,6 @@ function setBpm(b) {
     baseBpm = Math.max(20, Math.min(300, b));
 }
 
-// Bang triggers generation
 function bang() {
     generate();
-}
-
-/**
- * Handle dictionary input from live.miditool.in
- * Extracts clip duration and triggers generation
- * Modifies input dictionary directly for synchronous output
- */
-function dictionary(dictName) {
-    var d = new Dict(dictName);
-    var duration = d.get("duration_beats");
-    if (duration && duration > 0) {
-        clipDuration = duration;
-    }
-
-    // Generate notes directly into the input dictionary for synchronous response
-    generateToDict(d);
-
-    // Output the same dictionary we received
-    outlet(0, "dictionary", dictName);
 }
