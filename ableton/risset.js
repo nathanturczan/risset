@@ -10,13 +10,13 @@ inlets = 1;
 outlets = 1;
 
 // Default parameters
-var ratioNum = 2;
-var ratioDen = 1;
-var direction = "accel";  // "accel" or "decel"
-var mode = "arc";         // "arc" or "ramp"
-var measures = 4;
-var pitchLow = 60;        // C3
-var pitchHigh = 64;       // E3
+var ratioNum = 3;             // Ratio numerator
+var ratioDen = 2;             // Ratio denominator
+var direction = "accel";      // "accel" or "decel"
+var mode = "arc";             // "arc" or "ramp"
+var clipDuration = 16;        // Duration in beats (will be set from clip)
+var pitchLow = 60;            // C3
+var pitchHigh = 64;           // E3
 var baseBpm = 120;
 
 /**
@@ -136,12 +136,11 @@ function createLayerNotes(times, pitch, fadeOut, metabarBeats, timeOffset) {
 }
 
 /**
- * Main generation function - called when bang received.
+ * Generate notes and return as array
  */
-function generate() {
-    // Calculate beats
-    var beatsPerMeasure = 4;  // Assuming 4/4
-    var totalOutputBeats = beatsPerMeasure * measures;
+function generateNotes() {
+    // Use clip duration directly (in beats)
+    var totalOutputBeats = clipDuration;
 
     // Arc mode: 2 metabars, Ramp mode: 1 metabar
     var metabarBeats;
@@ -151,11 +150,8 @@ function generate() {
         metabarBeats = totalOutputBeats / 2;
     }
 
-    // Calculate ratio - normalize to >= 1
+    // Calculate ratio value
     var ratioValue = ratioNum / ratioDen;
-    if (ratioValue < 1) {
-        ratioValue = 1 / ratioValue;
-    }
 
     // Calculate tempos for each layer
     var layer1StartTempo, layer1EndTempo, layer2StartTempo, layer2EndTempo;
@@ -191,6 +187,24 @@ function generate() {
         allNotes = allNotes.concat(layer1NotesM2, layer2NotesM2);
     }
 
+    return allNotes;
+}
+
+/**
+ * Generate notes directly into a dictionary (for synchronous MIDI Tool response)
+ */
+function generateToDict(d) {
+    var allNotes = generateNotes();
+    var result = { notes: allNotes };
+    d.parse(JSON.stringify(result));
+}
+
+/**
+ * Main generation function - called when bang received.
+ */
+function generate() {
+    var allNotes = generateNotes();
+
     // Use Max's native Dict with JSON parsing
     var d = new Dict("risset_output");
     d.clear();
@@ -203,6 +217,10 @@ function generate() {
 }
 
 // Message handlers for parameters
+
+/**
+ * Set ratio with numerator and denominator
+ */
 function setRatio(num, den) {
     ratioNum = Math.max(1, Math.min(9, num));
     ratioDen = Math.max(1, Math.min(9, den));
@@ -220,8 +238,11 @@ function setMode(m) {
     }
 }
 
-function setMeasures(m) {
-    measures = Math.max(1, Math.min(16, m));
+/**
+ * Set clip duration in beats (called from live.miditool.in dictionary)
+ */
+function setClipDuration(beats) {
+    clipDuration = Math.max(1, beats);
 }
 
 function setPitchLow(p) {
@@ -241,18 +262,21 @@ function bang() {
     generate();
 }
 
-// List input for setting all parameters at once
-// Format: ratioNum ratioDen direction mode measures pitchLow pitchHigh
-function list() {
-    var args = arrayfromargs(arguments);
-    if (args.length >= 7) {
-        ratioNum = args[0];
-        ratioDen = args[1];
-        direction = args[2] === 0 ? "accel" : "decel";
-        mode = args[3] === 0 ? "arc" : "ramp";
-        measures = args[4];
-        pitchLow = args[5];
-        pitchHigh = args[6];
+/**
+ * Handle dictionary input from live.miditool.in
+ * Extracts clip duration and triggers generation
+ * Modifies input dictionary directly for synchronous output
+ */
+function dictionary(dictName) {
+    var d = new Dict(dictName);
+    var duration = d.get("duration_beats");
+    if (duration && duration > 0) {
+        clipDuration = duration;
     }
-    generate();
+
+    // Generate notes directly into the input dictionary for synchronous response
+    generateToDict(d);
+
+    // Output the same dictionary we received
+    outlet(0, "dictionary", dictName);
 }
