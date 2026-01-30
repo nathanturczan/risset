@@ -191,12 +191,15 @@ function generate() {
         allNotes = allNotes.concat(layer1NotesM2, layer2NotesM2);
     }
 
-    // Output as dictionary for live.miditool.out
-    var result = {
-        notes: allNotes
-    };
+    // Use Max's native Dict with JSON parsing
+    var d = new Dict("risset_output");
+    d.clear();
 
-    outlet(0, "dictionary", JSON.stringify(result));
+    // Build the result object and parse it into the Dict
+    var result = { notes: allNotes };
+    d.parse(JSON.stringify(result));
+
+    outlet(0, "dictionary", d.name);
 }
 
 // Message handlers for parameters
