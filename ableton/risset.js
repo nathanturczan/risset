@@ -223,3 +223,16 @@ function setBpm(b) {
 function bang() {
     generate();
 }
+
+/**
+ * Handle dictionary input from live.miditool.in
+ * Extracts clip duration before generating
+ */
+function dictionary(dictName) {
+    var d = new Dict(dictName);
+    var duration = d.get("duration_beats");
+    if (duration && duration > 0) {
+        clipDuration = duration;
+    }
+    generate();
+}
