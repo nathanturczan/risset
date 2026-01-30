@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risset Rhythm Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1e1e1e;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 8px;
+            overflow: hidden;
+            font-size: 9px;
+        }
+
+        .controls-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 6px;
+            align-items: flex-start;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .control-label {
+            font-size: 7px;
+            font-weight: 500;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Direction Toggle */
+        .toggle-container {
+            display: flex;
+            background: #1a1a1a;
+            border-radius: 2px;
+            overflow: hidden;
+            border: 1px solid #3a3a3a;
+        }
+
+        .toggle-option {
+            padding: 3px 8px;
+            font-size: 8px;
+            font-weight: 500;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+        }
+
+        .toggle-option:hover {
+            color: #999;
+        }
+
+        .toggle-option.active {
+            background: #ff6b35;
+            color: #fff;
+        }
+
+        .toggle-option.active.decel {
+            background: #3a86ff;
+        }
+
+        /* Ratio Display */
+        .ratio-container {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .ratio-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 2px;
+            padding: 2px 8px;
+            min-width: 36px;
+        }
+
+        .ratio-num, .ratio-den {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+            min-width: 20px;
+            text-align: center;
+            cursor: pointer;
+            line-height: 1.1;
+        }
+
+        .ratio-num:hover, .ratio-den:hover {
+            color: #ff6b35;
+        }
+
+        .ratio-num.highlight {
+            color: #ff6b35;
+        }
+
+        .ratio-den.highlight {
+            color: #3a86ff;
+        }
+
+        .ratio-divider {
+            width: 22px;
+            height: 1px;
+            background: #555;
+            margin: 1px 0;
+        }
+
+        .ratio-buttons-column {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .ratio-buttons-row {
+            display: flex;
+            gap: 2px;
+        }
+
+        .ratio-btn {
+            width: 18px;
+            height: 16px;
+            background: #2a2a2a;
+            border: 1px solid #4a4a4a;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #999;
+            font-size: 11px;
+            font-family: inherit;
+            padding: 0;
+        }
+
+        .ratio-btn:hover {
+            background: #3a3a3a;
+            border-color: #ff6b35;
+            color: #fff;
+        }
+
+        /* Dropdown Select */
+        .select-container {
+            position: relative;
+        }
+
+        .custom-select {
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 2px;
+            padding: 3px 14px 3px 4px;
+            font-size: 8px;
+            font-weight: 500;
+            color: #fff;
+            cursor: pointer;
+            appearance: none;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        .custom-select:focus {
+            outline: none;
+            border-color: #ff6b35;
+        }
+
+        .select-arrow {
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #666;
+            font-size: 6px;
+        }
+
+        /* Pitch Controls */
+        .pitch-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .pitch-control {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .pitch-input {
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 2px;
+            padding: 3px 4px;
+            font-size: 10px;
+            font-weight: 500;
+            color: #fff;
+            width: 42px;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        .pitch-input:focus {
+            outline: none;
+            border-color: #ff6b35;
+        }
+
+        .pitch-note {
+            font-size: 8px;
+            color: #666;
+        }
+
+        /* Constraint indicator */
+        .constraint-indicator {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 4px;
+            background: rgba(255, 107, 53, 0.15);
+            border: 1px solid rgba(255, 107, 53, 0.3);
+            border-radius: 2px;
+        }
+
+        .constraint-indicator.decel {
+            background: rgba(58, 134, 255, 0.15);
+            border-color: rgba(58, 134, 255, 0.3);
+        }
+
+        .constraint-icon {
+            font-size: 8px;
+        }
+
+        .constraint-text {
+            font-size: 7px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls-section">
+        <!-- Direction & Mode -->
+        <div class="control-row">
+            <div class="control-group">
+                <div class="control-label">Direction</div>
+                <div class="toggle-container">
+                    <button class="toggle-option active" id="accel-btn" onclick="setDirection('accel')">Accel ↗</button>
+                    <button class="toggle-option" id="decel-btn" onclick="setDirection('decel')">Decel ↘</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">Mode</div>
+                <div class="select-container">
+                    <select class="custom-select" id="mode-select" onchange="setMode(this.value)">
+                        <option value="arc">Arc</option>
+                        <option value="ramp">Ramp</option>
+                    </select>
+                    <span class="select-arrow">▼</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ratio and Pitch side by side -->
+        <div class="control-row">
+            <!-- Ratio -->
+            <div class="control-group">
+                <div class="control-label">Ratio</div>
+                <div class="ratio-container">
+                    <div class="ratio-display">
+                        <div class="ratio-num highlight" id="ratio-num" onclick="cycleNum()">3</div>
+                        <div class="ratio-divider"></div>
+                        <div class="ratio-den" id="ratio-den" onclick="cycleDen()">2</div>
+                    </div>
+                    <div class="ratio-buttons-column">
+                        <div class="ratio-buttons-row">
+                            <button class="ratio-btn" onclick="decrementNum()">−</button>
+                            <button class="ratio-btn" onclick="incrementNum()">+</button>
+                        </div>
+                        <div class="ratio-buttons-row">
+                            <button class="ratio-btn" onclick="decrementDen()">−</button>
+                            <button class="ratio-btn" onclick="incrementDen()">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pitch stacked vertically -->
+            <div class="pitch-stack">
+                <div class="control-group">
+                    <div class="control-label">High (In)</div>
+                    <div class="pitch-control">
+                        <input type="number" class="pitch-input" id="pitch-high" value="64" min="0" max="127" onchange="setPitchHigh()">
+                        <span class="pitch-note" id="pitch-high-note">E3</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="control-label">Low (Out)</div>
+                    <div class="pitch-control">
+                        <input type="number" class="pitch-input" id="pitch-low" value="60" min="0" max="127" onchange="setPitchLow()">
+                        <span class="pitch-note" id="pitch-low-note">C3</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Constraint indicator -->
+        <div class="constraint-indicator" id="constraint-indicator">
+            <span class="constraint-icon">⚡</span>
+            <span class="constraint-text" id="constraint-text">Top number must be larger</span>
+        </div>
+    </div>
+
+    <script>
+        let direction = 'accel';
+        let ratioNum = 3;
+        let ratioDen = 2;
+        let pitchHigh = 64;
+        let pitchLow = 60;
+        let mode = 'arc';
+
+        const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+        function sendToMax(param, value) {
+            if (window.max) {
+                window.max.outlet(param, value);
+            }
+        }
+
+        function midiToNote(midi) {
+            const octave = Math.floor(midi / 12) - 2;
+            const note = noteNames[midi % 12];
+            return note + octave;
+        }
+
+        function setDirection(dir) {
+            direction = dir;
+            const accelBtn = document.getElementById('accel-btn');
+            const decelBtn = document.getElementById('decel-btn');
+
+            accelBtn.classList.toggle('active', dir === 'accel');
+            decelBtn.classList.toggle('active', dir === 'decel');
+            decelBtn.classList.toggle('decel', dir === 'decel');
+
+            const indicator = document.getElementById('constraint-indicator');
+            const text = document.getElementById('constraint-text');
+
+            if (dir === 'accel') {
+                indicator.classList.remove('decel');
+                text.textContent = 'Top number must be larger';
+            } else {
+                indicator.classList.add('decel');
+                text.textContent = 'Bottom number must be larger';
+            }
+
+            enforceConstraint();
+            sendToMax('direction', dir === 'accel' ? 0 : 1);
+        }
+
+        function setMode(m) {
+            mode = m;
+            sendToMax('mode', m === 'arc' ? 0 : 1);
+        }
+
+        function enforceConstraint() {
+            if (direction === 'accel' && ratioNum <= ratioDen) {
+                [ratioNum, ratioDen] = [Math.max(ratioNum, ratioDen), Math.min(ratioNum, ratioDen)];
+                if (ratioNum === ratioDen) ratioNum = ratioDen + 1;
+            } else if (direction === 'decel' && ratioNum >= ratioDen) {
+                [ratioNum, ratioDen] = [Math.min(ratioNum, ratioDen), Math.max(ratioNum, ratioDen)];
+                if (ratioNum === ratioDen) ratioDen = ratioNum + 1;
+            }
+
+            ratioNum = Math.max(1, Math.min(9, ratioNum));
+            ratioDen = Math.max(1, Math.min(9, ratioDen));
+
+            updateRatioDisplay();
+            sendToMax('ratio', ratioNum, ratioDen);
+        }
+
+        function updateRatioDisplay() {
+            document.getElementById('ratio-num').textContent = ratioNum;
+            document.getElementById('ratio-den').textContent = ratioDen;
+
+            const numEl = document.getElementById('ratio-num');
+            const denEl = document.getElementById('ratio-den');
+
+            if (direction === 'accel') {
+                numEl.classList.add('highlight');
+                denEl.classList.remove('highlight');
+            } else {
+                numEl.classList.remove('highlight');
+                denEl.classList.add('highlight');
+            }
+        }
+
+        function incrementNum() { ratioNum = Math.min(9, ratioNum + 1); enforceConstraint(); }
+        function decrementNum() { ratioNum = Math.max(1, ratioNum - 1); enforceConstraint(); }
+        function incrementDen() { ratioDen = Math.min(9, ratioDen + 1); enforceConstraint(); }
+        function decrementDen() { ratioDen = Math.max(1, ratioDen - 1); enforceConstraint(); }
+        function cycleNum() { ratioNum = (ratioNum % 9) + 1; enforceConstraint(); }
+        function cycleDen() { ratioDen = (ratioDen % 9) + 1; enforceConstraint(); }
+
+        function setPitchHigh() {
+            const input = document.getElementById('pitch-high');
+            pitchHigh = Math.max(0, Math.min(127, parseInt(input.value) || 64));
+            input.value = pitchHigh;
+            document.getElementById('pitch-high-note').textContent = midiToNote(pitchHigh);
+            sendToMax('pitchHigh', pitchHigh);
+        }
+
+        function setPitchLow() {
+            const input = document.getElementById('pitch-low');
+            pitchLow = Math.max(0, Math.min(127, parseInt(input.value) || 60));
+            input.value = pitchLow;
+            document.getElementById('pitch-low-note').textContent = midiToNote(pitchLow);
+            sendToMax('pitchLow', pitchLow);
+        }
+
+        if (window.max) {
+            window.max.bindInlet('setDirection', function(val) {
+                setDirection(val === 0 ? 'accel' : 'decel');
+            });
+            window.max.bindInlet('setMode', function(val) {
+                mode = val === 0 ? 'arc' : 'ramp';
+                document.getElementById('mode-select').value = mode;
+            });
+            window.max.bindInlet('setRatio', function(num, den) {
+                ratioNum = num;
+                ratioDen = den;
+                updateRatioDisplay();
+            });
+            window.max.bindInlet('setPitchHigh', function(val) {
+                pitchHigh = val;
+                document.getElementById('pitch-high').value = val;
+                document.getElementById('pitch-high-note').textContent = midiToNote(val);
+            });
+            window.max.bindInlet('setPitchLow', function(val) {
+                pitchLow = val;
+                document.getElementById('pitch-low').value = val;
+                document.getElementById('pitch-low-note').textContent = midiToNote(val);
+            });
+        }
+
+        // Initialize
+        document.getElementById('pitch-high-note').textContent = midiToNote(pitchHigh);
+        document.getElementById('pitch-low-note').textContent = midiToNote(pitchLow);
+    </script>
+</body>
+</html>
