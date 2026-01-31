@@ -27,6 +27,24 @@ The UI enforces these constraints and displays a reminder. The JS normalizes the
 ## References
 - Stowell, D. (2011). "Scheduling and Composing with Risset Eternal Accelerando Rhythms." Proceedings of the International Computer Music Conference 2011.
 
+## File Locations
+Development and testing happen in two different directories:
+- **Development**: `/Users/soney/Github/risset/ableton/` - all code changes happen here
+- **Testing**: `/Users/soney/Music/Ableton/User Library/MIDI Tools/Max Generators/` - where Ableton loads from
+
+After making changes, files must be copied from development to testing:
+```bash
+cp /Users/soney/Github/risset/ableton/* "/Users/soney/Music/Ableton/User Library/MIDI Tools/Max Generators/"
+```
+
+The .amxd file bundles its own copies of JS/HTML. To update:
+1. Copy .js and .html to User Library
+2. Open .amxd in Max
+3. Compile JS (double-click js object, Cmd+S)
+4. Save .amxd (Cmd+S)
+
+Before pushing to git, copy the tested .amxd back to the repo.
+
 ## Design Philosophy
 We are emulating Philip Meyer's approach to packaging and form factor for Max MIDI Tool devices:
 - **meyer-devices.com** - Reference for device categories (Generators, Transformers)
