@@ -365,10 +365,10 @@
 
             if (dir === 'accel') {
                 indicator.classList.remove('decel');
-                text.textContent = 'Top number must be larger';
+                text.textContent = 'Bottom number must be larger';
             } else {
                 indicator.classList.add('decel');
-                text.textContent = 'Bottom number must be larger';
+                text.textContent = 'Top number must be larger';
             }
 
             enforceConstraint();
@@ -381,12 +381,14 @@
         }
 
         function enforceConstraint() {
-            if (direction === 'accel' && ratioNum <= ratioDen) {
-                [ratioNum, ratioDen] = [Math.max(ratioNum, ratioDen), Math.min(ratioNum, ratioDen)];
-                if (ratioNum === ratioDen) ratioNum = ratioDen + 1;
-            } else if (direction === 'decel' && ratioNum >= ratioDen) {
+            // Accel: num < den (smaller on top, speeding up to larger)
+            // Decel: num > den (larger on top, slowing down to smaller)
+            if (direction === 'accel' && ratioNum >= ratioDen) {
                 [ratioNum, ratioDen] = [Math.min(ratioNum, ratioDen), Math.max(ratioNum, ratioDen)];
                 if (ratioNum === ratioDen) ratioDen = ratioNum + 1;
+            } else if (direction === 'decel' && ratioNum <= ratioDen) {
+                [ratioNum, ratioDen] = [Math.max(ratioNum, ratioDen), Math.min(ratioNum, ratioDen)];
+                if (ratioNum === ratioDen) ratioNum = ratioDen + 1;
             }
 
             ratioNum = Math.max(1, Math.min(9, ratioNum));
