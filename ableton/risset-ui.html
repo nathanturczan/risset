@@ -14,35 +14,35 @@
             background: #1e1e1e;
             color: #fff;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            padding: 8px;
+            padding: 2px 4px 2px 4px;
             overflow: hidden;
-            font-size: 9px;
+            font-size: 8px;
         }
 
         .controls-section {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 3px;
         }
 
         .control-row {
             display: flex;
-            gap: 6px;
+            gap: 8px;
             align-items: flex-start;
         }
 
         .control-group {
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 1px;
         }
 
         .control-label {
-            font-size: 7px;
+            font-size: 6px;
             font-weight: 500;
             color: #888;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         /* Direction Toggle */
@@ -55,8 +55,8 @@
         }
 
         .toggle-option {
-            padding: 3px 8px;
-            font-size: 8px;
+            padding: 2px 6px;
+            font-size: 7px;
             font-weight: 500;
             color: #666;
             cursor: pointer;
@@ -79,33 +79,38 @@
             background: #3a86ff;
         }
 
-        /* Ratio Display */
-        .ratio-container {
+        /* Ratio + Pitch Grid Layout */
+        .ratio-pitch-row {
             display: flex;
-            align-items: center;
-            gap: 4px;
+            gap: 6px;
         }
 
-        .ratio-display {
+        .ratio-pitch-grid {
             display: flex;
             flex-direction: column;
+            gap: 1px;
+        }
+
+        .ratio-num-container,
+        .ratio-den-container {
+            display: flex;
             align-items: center;
-            background: #1a1a1a;
-            border: 1px solid #3a3a3a;
-            border-radius: 2px;
-            padding: 2px 8px;
-            min-width: 36px;
+            gap: 3px;
         }
 
         .ratio-num, .ratio-den {
             font-size: 18px;
             font-weight: 600;
             color: #fff;
-            min-width: 20px;
+            min-width: 24px;
             text-align: center;
             cursor: ns-resize;
-            line-height: 1.1;
+            line-height: 1;
             user-select: none;
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 2px;
+            padding: 2px 6px;
         }
 
         .ratio-num:hover, .ratio-den:hover {
@@ -120,19 +125,6 @@
             color: #3a86ff;
         }
 
-        .ratio-divider {
-            width: 22px;
-            height: 1px;
-            background: #555;
-            margin: 1px 0;
-        }
-
-        .ratio-buttons-column {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
         .ratio-buttons-row {
             display: flex;
             gap: 2px;
@@ -140,7 +132,7 @@
 
         .ratio-btn {
             width: 18px;
-            height: 16px;
+            height: 20px;
             background: #2a2a2a;
             border: 1px solid #4a4a4a;
             border-radius: 2px;
@@ -160,6 +152,19 @@
             color: #fff;
         }
 
+        /* Pitch section */
+        .pitch-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .pitch-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0px;
+        }
+
         /* Dropdown Select */
         .select-container {
             position: relative;
@@ -169,8 +174,8 @@
             background: #1a1a1a;
             border: 1px solid #3a3a3a;
             border-radius: 2px;
-            padding: 3px 14px 3px 4px;
-            font-size: 8px;
+            padding: 2px 12px 2px 4px;
+            font-size: 7px;
             font-weight: 500;
             color: #fff;
             cursor: pointer;
@@ -195,12 +200,6 @@
         }
 
         /* Pitch Controls */
-        .pitch-stack {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
         .pitch-control {
             display: flex;
             align-items: center;
@@ -211,13 +210,20 @@
             background: #1a1a1a;
             border: 1px solid #3a3a3a;
             border-radius: 2px;
-            padding: 3px 4px;
+            padding: 2px 1px;
             font-size: 10px;
             font-weight: 500;
             color: #fff;
-            width: 42px;
+            width: 24px;
             text-align: center;
             font-family: inherit;
+            -moz-appearance: textfield;
+        }
+
+        .pitch-input::-webkit-outer-spin-button,
+        .pitch-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
 
         .pitch-input:focus {
@@ -225,9 +231,37 @@
             border-color: #ff6b35;
         }
 
+        .pitch-btn {
+            width: 14px;
+            height: 14px;
+            background: #2a2a2a;
+            border: 1px solid #4a4a4a;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #999;
+            font-size: 9px;
+            font-family: inherit;
+            padding: 0;
+        }
+
+        .pitch-btn:hover {
+            background: #3a3a3a;
+            border-color: #ff6b35;
+            color: #fff;
+        }
+
+        .pitch-buttons {
+            display: flex;
+            gap: 1px;
+        }
+
         .pitch-note {
-            font-size: 8px;
+            font-size: 7px;
             color: #666;
+            min-width: 18px;
         }
 
         /* Constraint indicator */
@@ -239,6 +273,7 @@
             background: rgba(255, 107, 53, 0.15);
             border: 1px solid rgba(255, 107, 53, 0.3);
             border-radius: 2px;
+            width: fit-content;
         }
 
         .constraint-indicator.decel {
@@ -246,19 +281,93 @@
             border-color: rgba(58, 134, 255, 0.3);
         }
 
-        .constraint-icon {
+        .constraint-ratio {
             font-size: 8px;
+            font-weight: 600;
+            color: #ff6b35;
+        }
+
+        .constraint-indicator.decel .constraint-ratio {
+            color: #3a86ff;
         }
 
         .constraint-text {
+            font-size: 6px;
+            color: #888;
+        }
+
+        /* Velocity Curve Slider */
+        .velocity-row {
+            width: auto;
+        }
+
+        .velocity-group {
+            width: auto;
+        }
+
+        .velocity-control {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .velocity-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100px;
+            height: 4px;
+            background: #3a3a3a;
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .velocity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #ff6b35;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .velocity-slider.decel::-webkit-slider-thumb {
+            background: #3a86ff;
+        }
+
+        .velocity-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background: #ff6b35;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .velocity-slider.decel::-moz-range-thumb {
+            background: #3a86ff;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 5px;
+            color: #666;
+            margin-top: 0px;
+            width: 100px;
+        }
+
+        .velocity-value {
             font-size: 7px;
             color: #888;
+            min-width: 18px;
+            text-align: right;
         }
     </style>
 </head>
 <body>
     <div class="controls-section">
-        <!-- Direction & Mode -->
+        <!-- Row 1: Direction & Mode -->
         <div class="control-row">
             <div class="control-group">
                 <div class="control-label">Direction</div>
@@ -268,7 +377,7 @@
                 </div>
             </div>
 
-            <div class="control-group">
+            <div class="control-group mode-group">
                 <div class="control-label">Mode</div>
                 <div class="select-container">
                     <select class="custom-select" id="mode-select" onchange="setMode(this.value)">
@@ -280,22 +389,23 @@
             </div>
         </div>
 
-        <!-- Ratio and Pitch side by side -->
-        <div class="control-row">
-            <!-- Ratio -->
+        <!-- Row 2: Ratio + Pitch aligned -->
+        <div class="control-row ratio-pitch-row">
+            <!-- Ratio section -->
             <div class="control-group">
                 <div class="control-label">Ratio</div>
-                <div class="ratio-container">
-                    <div class="ratio-display">
+                <div class="ratio-pitch-grid">
+                    <!-- Numerator row -->
+                    <div class="ratio-num-container">
                         <div class="ratio-num highlight" id="ratio-num" onclick="cycleNum()">2</div>
-                        <div class="ratio-divider"></div>
-                        <div class="ratio-den" id="ratio-den" onclick="cycleDen()">3</div>
-                    </div>
-                    <div class="ratio-buttons-column">
                         <div class="ratio-buttons-row">
                             <button class="ratio-btn" onclick="decrementNum()">−</button>
                             <button class="ratio-btn" onclick="incrementNum()">+</button>
                         </div>
+                    </div>
+                    <!-- Denominator row -->
+                    <div class="ratio-den-container">
+                        <div class="ratio-den" id="ratio-den" onclick="cycleDen()">3</div>
                         <div class="ratio-buttons-row">
                             <button class="ratio-btn" onclick="decrementDen()">−</button>
                             <button class="ratio-btn" onclick="incrementDen()">+</button>
@@ -304,29 +414,54 @@
                 </div>
             </div>
 
-            <!-- Pitch stacked vertically -->
-            <div class="pitch-stack">
-                <div class="control-group">
+            <!-- Pitch section aligned with ratio rows -->
+            <div class="control-group pitch-group">
+                <div class="pitch-row">
                     <div class="control-label">High (In)</div>
                     <div class="pitch-control">
                         <input type="number" class="pitch-input" id="pitch-high" value="64" min="0" max="127" onchange="setPitchHigh()">
+                        <div class="pitch-buttons">
+                            <button class="pitch-btn" onclick="decrementPitchHigh()">−</button>
+                            <button class="pitch-btn" onclick="incrementPitchHigh()">+</button>
+                        </div>
                         <span class="pitch-note" id="pitch-high-note">E3</span>
                     </div>
                 </div>
-                <div class="control-group">
+                <div class="pitch-row">
                     <div class="control-label">Low (Out)</div>
                     <div class="pitch-control">
                         <input type="number" class="pitch-input" id="pitch-low" value="60" min="0" max="127" onchange="setPitchLow()">
+                        <div class="pitch-buttons">
+                            <button class="pitch-btn" onclick="decrementPitchLow()">−</button>
+                            <button class="pitch-btn" onclick="incrementPitchLow()">+</button>
+                        </div>
                         <span class="pitch-note" id="pitch-low-note">C3</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Constraint indicator -->
+        <!-- Row 3: Velocity (full width) -->
+        <div class="control-row velocity-row">
+            <div class="control-group velocity-group">
+                <div class="control-label">Velocity</div>
+                <div class="velocity-control">
+                    <input type="range" class="velocity-slider" id="velocity-curve"
+                           min="0.5" max="3.0" step="0.1" value="1.5"
+                           oninput="setVelocityCurve(this.value)">
+                    <span class="velocity-value" id="velocity-value">1.5</span>
+                </div>
+                <div class="slider-labels">
+                    <span>Punch</span>
+                    <span>Gentle</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 4: Constraint indicator (full width) -->
         <div class="constraint-indicator" id="constraint-indicator">
-            <span class="constraint-icon">⚡</span>
-            <span class="constraint-text" id="constraint-text">Bottom number must be larger</span>
+            <span class="constraint-ratio" id="constraint-ratio">2/3</span>
+            <span class="constraint-text" id="constraint-text">Num < Denom → accel</span>
         </div>
     </div>
 
@@ -337,8 +472,9 @@
         let pitchHigh = 64;
         let pitchLow = 60;
         let mode = 'arc';
+        let velocityCurve = 1.5;  // gamma: 0.5=punch, 1.0=linear, 3.0=gentle
 
-        const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const noteNames = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
 
         function sendToMax(param, ...values) {
             if (window.max) {
@@ -364,13 +500,15 @@
             const indicator = document.getElementById('constraint-indicator');
             const text = document.getElementById('constraint-text');
 
+            const slider = document.getElementById('velocity-curve');
             if (dir === 'accel') {
                 indicator.classList.remove('decel');
-                text.textContent = 'Bottom number must be larger';
+                slider.classList.remove('decel');
             } else {
                 indicator.classList.add('decel');
-                text.textContent = 'Top number must be larger';
+                slider.classList.add('decel');
             }
+            updateConstraintRatio();
 
             enforceConstraint();
             sendToMax('direction', dir === 'accel' ? 0 : 1);
@@ -412,6 +550,19 @@
             } else {
                 numEl.classList.remove('highlight');
                 denEl.classList.add('highlight');
+            }
+            updateConstraintRatio();
+        }
+
+        function updateConstraintRatio() {
+            const ratioEl = document.getElementById('constraint-ratio');
+            const textEl = document.getElementById('constraint-text');
+            if (direction === 'accel') {
+                ratioEl.textContent = ratioNum + '/' + ratioDen;
+                textEl.textContent = 'Num < Denom → accel';
+            } else {
+                ratioEl.textContent = ratioNum + '/' + ratioDen;
+                textEl.textContent = 'Num > Denom → decel';
             }
         }
 
@@ -474,12 +625,46 @@
             sendToMax('pitchHigh', pitchHigh);
         }
 
+        function incrementPitchHigh() {
+            pitchHigh = Math.min(127, pitchHigh + 1);
+            document.getElementById('pitch-high').value = pitchHigh;
+            document.getElementById('pitch-high-note').textContent = midiToNote(pitchHigh);
+            sendToMax('pitchHigh', pitchHigh);
+        }
+
+        function decrementPitchHigh() {
+            pitchHigh = Math.max(0, pitchHigh - 1);
+            document.getElementById('pitch-high').value = pitchHigh;
+            document.getElementById('pitch-high-note').textContent = midiToNote(pitchHigh);
+            sendToMax('pitchHigh', pitchHigh);
+        }
+
         function setPitchLow() {
             const input = document.getElementById('pitch-low');
             pitchLow = Math.max(0, Math.min(127, parseInt(input.value) || 60));
             input.value = pitchLow;
             document.getElementById('pitch-low-note').textContent = midiToNote(pitchLow);
             sendToMax('pitchLow', pitchLow);
+        }
+
+        function incrementPitchLow() {
+            pitchLow = Math.min(127, pitchLow + 1);
+            document.getElementById('pitch-low').value = pitchLow;
+            document.getElementById('pitch-low-note').textContent = midiToNote(pitchLow);
+            sendToMax('pitchLow', pitchLow);
+        }
+
+        function decrementPitchLow() {
+            pitchLow = Math.max(0, pitchLow - 1);
+            document.getElementById('pitch-low').value = pitchLow;
+            document.getElementById('pitch-low-note').textContent = midiToNote(pitchLow);
+            sendToMax('pitchLow', pitchLow);
+        }
+
+        function setVelocityCurve(val) {
+            velocityCurve = parseFloat(val);
+            document.getElementById('velocity-value').textContent = velocityCurve.toFixed(1);
+            sendToMax('velocityCurve', velocityCurve);
         }
 
         if (window.max) {
@@ -504,6 +689,11 @@
                 pitchLow = val;
                 document.getElementById('pitch-low').value = val;
                 document.getElementById('pitch-low-note').textContent = midiToNote(val);
+            });
+            window.max.bindInlet('setVelocityCurve', function(val) {
+                velocityCurve = val;
+                document.getElementById('velocity-curve').value = val;
+                document.getElementById('velocity-value').textContent = val.toFixed(1);
             });
         }
 

@@ -25,6 +25,7 @@ var clipDuration = 16;        // Duration in beats (will be set from clip)
 var pitchLow = 60;            // C3
 var pitchHigh = 64;           // E3
 var baseBpm = 120;
+var velocityGamma = 1.5;          // Velocity curve: <1 = punch, 1 = linear, >1 = gentle
 
 
 /**
@@ -118,13 +119,22 @@ function createLayerNotes(times, pitch, fadeOut, metabarBeats, timeOffset) {
         var noteData = validNotes[i];
         var velocity;
 
+        // Calculate linear velocity first
+        var linearVel;
         if (fadeOut) {
             var progress = (nNotes > 1) ? i / (nNotes - 1) : 0.0;
-            velocity = Math.round(127 - 126 * progress);
+            linearVel = 1.0 - progress;  // 1.0 → 0.0
         } else {
             var progress = (nNotes > 1) ? i / nNotes : 0.0;
-            velocity = Math.round(1 + 126 * progress);
+            linearVel = progress;  // 0.0 → 1.0
         }
+
+        // Apply velocity curve (gamma)
+        // gamma < 1: hard/compensatory (boosts middle)
+        // gamma = 1: linear (no shaping)
+        // gamma > 1: soft (reduces middle, conservative)
+        var shaped = Math.pow(linearVel, velocityGamma);
+        velocity = Math.round(1 + 126 * shaped);
 
         velocity = Math.max(1, Math.min(127, velocity));
 
@@ -237,6 +247,12 @@ function setPitchHigh(p) {
 
 function setBpm(b) {
     baseBpm = Math.max(20, Math.min(300, b));
+}
+
+function setVelocityCurve(gamma) {
+    // Range: 0.5 (hard/compensatory) to 3.0 (soft/conservative)
+    velocityGamma = Math.max(0.5, Math.min(3.0, gamma));
+    post("velocityGamma:", velocityGamma, "\n");
 }
 
 function bang() {
