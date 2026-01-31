@@ -163,6 +163,7 @@
             display: flex;
             flex-direction: column;
             gap: 0px;
+            padding: 2px 0;
         }
 
         /* Dropdown Select */
@@ -273,7 +274,7 @@
             background: rgba(255, 107, 53, 0.15);
             border: 1px solid rgba(255, 107, 53, 0.3);
             border-radius: 2px;
-            width: fit-content;
+            width: 100%;
         }
 
         .constraint-indicator.decel {
@@ -298,23 +299,24 @@
 
         /* Velocity Curve Slider */
         .velocity-row {
-            width: auto;
+            width: 100%;
         }
 
         .velocity-group {
-            width: auto;
+            width: 100%;
         }
 
         .velocity-control {
             display: flex;
             align-items: center;
             gap: 4px;
+            width: 100%;
         }
 
         .velocity-slider {
             -webkit-appearance: none;
             appearance: none;
-            width: 100px;
+            flex: 1;
             height: 4px;
             background: #3a3a3a;
             border-radius: 2px;
@@ -354,14 +356,12 @@
             font-size: 5px;
             color: #666;
             margin-top: 0px;
-            width: 100px;
+            width: 100%;
         }
 
         .velocity-value {
-            font-size: 7px;
-            color: #888;
-            min-width: 18px;
-            text-align: right;
+            font-size: 6px;
+            color: #fff;
         }
     </style>
 </head>
@@ -441,15 +441,14 @@
             </div>
         </div>
 
-        <!-- Row 3: Velocity (full width) -->
+        <!-- Row 3: Velocity Response (full width) -->
         <div class="control-row velocity-row">
             <div class="control-group velocity-group">
-                <div class="control-label">Velocity</div>
+                <div class="control-label">Velocity Response: <span class="velocity-value" id="velocity-value">1.5</span></div>
                 <div class="velocity-control">
                     <input type="range" class="velocity-slider" id="velocity-curve"
                            min="0.5" max="3.0" step="0.1" value="1.5"
                            oninput="setVelocityCurve(this.value)">
-                    <span class="velocity-value" id="velocity-value">1.5</span>
                 </div>
                 <div class="slider-labels">
                     <span>Punch</span>
