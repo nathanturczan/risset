@@ -22,6 +22,7 @@ The UI enforces these constraints and displays a reminder. The JS normalizes the
 
 ## Terminology
 - Use "metabar" (no hyphen) to match academic literature (Stowell 2011)
+- Always say "polyrhythmic", NEVER "polymetric" - remind the user if they make this mistake
 
 ## References
 - Stowell, D. (2011). "Scheduling and Composing with Risset Eternal Accelerando Rhythms." Proceedings of the International Computer Music Conference 2011.
