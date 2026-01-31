@@ -118,18 +118,6 @@
 			}
 , 			{
 				"box" : 				{
-					"id" : "obj-trigger",
-					"maxclass" : "newobj",
-					"numinlets" : 1,
-					"numoutlets" : 1,
-					"outlettype" : [ "bang" ],
-					"patching_rect" : [ 50.0, 100.0, 22.0, 22.0 ],
-					"text" : "t b"
-				}
-
-			}
-, 			{
-				"box" : 				{
 					"id" : "obj-js",
 					"maxclass" : "newobj",
 					"numinlets" : 1,
@@ -222,7 +210,7 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-trigger", 0 ],
+					"destination" : [ "obj-js", 0 ],
 					"source" : [ "obj-miditool-in", 0 ]
 				}
 
@@ -294,13 +282,6 @@
 				"patchline" : 				{
 					"destination" : [ "obj-prepend-ratio", 0 ],
 					"source" : [ "obj-route", 2 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
-					"destination" : [ "obj-js", 0 ],
-					"source" : [ "obj-trigger", 0 ]
 				}
 
 			}

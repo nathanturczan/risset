@@ -230,9 +230,18 @@ function bang() {
  */
 function dictionary(dictName) {
     var d = new Dict(dictName);
+
+    // Try duration_beats first (custom), then calculate from clip_start/clip_end
     var duration = d.get("duration_beats");
     if (duration && duration > 0) {
         clipDuration = duration;
+    } else {
+        var clipStart = d.get("clip_start");
+        var clipEnd = d.get("clip_end");
+        if (clipStart !== undefined && clipEnd !== undefined && clipEnd > clipStart) {
+            clipDuration = clipEnd - clipStart;
+        }
     }
+
     generate();
 }
