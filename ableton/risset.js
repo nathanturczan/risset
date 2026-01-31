@@ -9,6 +9,10 @@
 inlets = 1;
 outlets = 1;
 
+post("\n========================================\n");
+post("Risset JS compiled successfully!\n");
+post("========================================\n");
+
 // Create dict once at load time
 var outputDict = new Dict("risset_output");
 
@@ -139,6 +143,12 @@ function createLayerNotes(times, pitch, fadeOut, metabarBeats, timeOffset) {
  * Main generation function - called when bang received.
  */
 function generate() {
+    post("=== GENERATE CALLED ===\n");
+    post("clipDuration:", clipDuration, "\n");
+    post("mode:", mode, "\n");
+    post("direction:", direction, "\n");
+    post("ratioNum:", ratioNum, "ratioDen:", ratioDen, "\n");
+
     var totalOutputBeats = clipDuration;
 
     var metabarBeats;
@@ -150,6 +160,8 @@ function generate() {
 
     // Normalize ratio to always be > 1 - direction controls tempo change direction
     var ratioValue = Math.max(ratioNum, ratioDen) / Math.min(ratioNum, ratioDen);
+    post("ratioValue (normalized):", ratioValue, "\n");
+    post("metabarBeats:", metabarBeats, "\n");
 
     var layer1StartTempo, layer1EndTempo, layer2StartTempo, layer2EndTempo;
 
@@ -189,20 +201,26 @@ function generate() {
 
 // Message handlers for parameters
 function setRatio(num, den) {
+    post("setRatio called with:", num, den, "\n");
     ratioNum = Math.max(1, Math.min(9, num));
     ratioDen = Math.max(1, Math.min(9, den));
+    post("ratioNum:", ratioNum, "ratioDen:", ratioDen, "\n");
 }
 
 function setDirection(dir) {
+    post("setDirection called with:", dir, "\n");
     if (dir === "accel" || dir === "decel" || dir === 0 || dir === 1) {
         direction = (dir === 0 || dir === "accel") ? "accel" : "decel";
     }
+    post("direction:", direction, "\n");
 }
 
 function setMode(m) {
+    post("setMode called with:", m, "\n");
     if (m === "arc" || m === "ramp" || m === 0 || m === 1) {
         mode = (m === 0 || m === "arc") ? "arc" : "ramp";
     }
+    post("mode:", mode, "\n");
 }
 
 function setClipDuration(beats) {

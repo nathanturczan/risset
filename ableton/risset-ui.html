@@ -103,8 +103,9 @@
             color: #fff;
             min-width: 20px;
             text-align: center;
-            cursor: pointer;
+            cursor: ns-resize;
             line-height: 1.1;
+            user-select: none;
         }
 
         .ratio-num:hover, .ratio-den:hover {
@@ -286,9 +287,9 @@
                 <div class="control-label">Ratio</div>
                 <div class="ratio-container">
                     <div class="ratio-display">
-                        <div class="ratio-num highlight" id="ratio-num" onclick="cycleNum()">3</div>
+                        <div class="ratio-num highlight" id="ratio-num" onclick="cycleNum()">2</div>
                         <div class="ratio-divider"></div>
-                        <div class="ratio-den" id="ratio-den" onclick="cycleDen()">2</div>
+                        <div class="ratio-den" id="ratio-den" onclick="cycleDen()">3</div>
                     </div>
                     <div class="ratio-buttons-column">
                         <div class="ratio-buttons-row">
@@ -325,23 +326,23 @@
         <!-- Constraint indicator -->
         <div class="constraint-indicator" id="constraint-indicator">
             <span class="constraint-icon">⚡</span>
-            <span class="constraint-text" id="constraint-text">Top number must be larger</span>
+            <span class="constraint-text" id="constraint-text">Bottom number must be larger</span>
         </div>
     </div>
 
     <script>
         let direction = 'accel';
-        let ratioNum = 3;
-        let ratioDen = 2;
+        let ratioNum = 2;
+        let ratioDen = 3;
         let pitchHigh = 64;
         let pitchLow = 60;
         let mode = 'arc';
 
         const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-        function sendToMax(param, value) {
+        function sendToMax(param, ...values) {
             if (window.max) {
-                window.max.outlet(param, value);
+                window.max.outlet(param, ...values);
             }
         }
 
@@ -420,6 +421,50 @@
         function decrementDen() { ratioDen = Math.max(1, ratioDen - 1); enforceConstraint(); }
         function cycleNum() { ratioNum = (ratioNum % 9) + 1; enforceConstraint(); }
         function cycleDen() { ratioDen = (ratioDen % 9) + 1; enforceConstraint(); }
+
+        // Drag-to-change functionality
+        function setupDrag(elementId, incrementFn, decrementFn) {
+            const el = document.getElementById(elementId);
+            let isDragging = false;
+            let startY = 0;
+            let accumulated = 0;
+            const threshold = 15; // pixels per increment
+
+            el.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startY = e.clientY;
+                accumulated = 0;
+                el.style.cursor = 'ns-resize';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const deltaY = startY - e.clientY; // negative = down, positive = up
+                accumulated += deltaY;
+                startY = e.clientY;
+
+                while (accumulated >= threshold) {
+                    incrementFn();
+                    accumulated -= threshold;
+                }
+                while (accumulated <= -threshold) {
+                    decrementFn();
+                    accumulated += threshold;
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    el.style.cursor = 'pointer';
+                }
+            });
+        }
+
+        // Initialize drag handlers after DOM is ready
+        setupDrag('ratio-num', incrementNum, decrementNum);
+        setupDrag('ratio-den', incrementDen, decrementDen);
 
         function setPitchHigh() {
             const input = document.getElementById('pitch-high');
