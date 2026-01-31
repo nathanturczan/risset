@@ -183,20 +183,6 @@
 		"lines" : [ 			{
 				"patchline" : 				{
 					"destination" : [ "obj-miditool-out", 0 ],
-					"source" : [ "obj-deserialize", 0 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
-					"destination" : [ "obj-deserialize", 0 ],
-					"source" : [ "obj-fromsymbol", 0 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
-					"destination" : [ "obj-fromsymbol", 0 ],
 					"source" : [ "obj-js", 0 ]
 				}
 

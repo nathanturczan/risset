@@ -148,7 +148,8 @@ function generate() {
         metabarBeats = totalOutputBeats / 2;
     }
 
-    var ratioValue = ratioNum / ratioDen;
+    // Normalize ratio to always be > 1 - direction controls tempo change direction
+    var ratioValue = Math.max(ratioNum, ratioDen) / Math.min(ratioNum, ratioDen);
 
     var layer1StartTempo, layer1EndTempo, layer2StartTempo, layer2EndTempo;
 
@@ -221,27 +222,46 @@ function setBpm(b) {
 }
 
 function bang() {
+    post("bang received\n");
     generate();
+}
+
+function anything() {
+    var args = arrayfromargs(messagename, arguments);
+    post("anything received:", args, "\n");
 }
 
 /**
  * Handle dictionary input from live.miditool.in
- * Extracts clip duration before generating
+ * Outlet 1 sends notes dictionary (triggers generate)
+ * Outlet 2 sends clip/scale/grid info (extract duration)
  */
 function dictionary(dictName) {
     var d = new Dict(dictName);
+    var keys = d.getkeys();
 
-    // Try duration_beats first (custom), then calculate from clip_start/clip_end
-    var duration = d.get("duration_beats");
-    if (duration && duration > 0) {
-        clipDuration = duration;
-    } else {
-        var clipStart = d.get("clip_start");
-        var clipEnd = d.get("clip_end");
-        if (clipStart !== undefined && clipEnd !== undefined && clipEnd > clipStart) {
-            clipDuration = clipEnd - clipStart;
+    post("Dictionary received:", dictName, "\n");
+    post("Keys:", keys, "\n");
+
+    // Check if this is the clip info dictionary (outlet 2)
+    if (d.contains("clip")) {
+        var clipDict = d.get("clip");
+        if (clipDict) {
+            var selStart = d.get("clip::time_selection_start");
+            var selEnd = d.get("clip::time_selection_end");
+            post("time_selection_start:", selStart, "time_selection_end:", selEnd, "\n");
+            if (selStart !== undefined && selEnd !== undefined && selEnd > selStart) {
+                clipDuration = selEnd - selStart;
+                post("Set clipDuration from clip info:", clipDuration, "\n");
+            }
         }
+        // Don't generate yet - wait for notes dictionary
+        return;
     }
 
-    generate();
+    // Check if this is the notes dictionary (outlet 1) - triggers generate
+    if (d.contains("notes")) {
+        post("Notes dictionary received, generating with clipDuration:", clipDuration, "\n");
+        generate();
+    }
 }

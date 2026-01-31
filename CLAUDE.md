@@ -13,6 +13,13 @@ Every README must end with an "About the Author" section:
 Nathan Turczan is a composer and creative technologist based in Los Angeles, CA. You can find his website at [nathanturczan.com](https://nathanturczan.com), follow him on Instagram [@nathan_turczan](https://www.instagram.com/nathan_turczan/), or reach him at nathanturczan@gmail.com.
 ```
 
+## Ratio Constraints
+The ratio numerator/denominator constraints differ by direction:
+- **Accelerating**: numerator < denominator (e.g., 2:9) - speeding up from small to large
+- **Decelerating**: numerator > denominator (e.g., 9:2) - slowing down from large to small
+
+The JS normalizes the ratio internally to always be > 1, so the direction toggle controls the tempo change direction.
+
 ## Terminology
 - Use "metabar" (no hyphen) to match academic literature (Stowell 2011)
 

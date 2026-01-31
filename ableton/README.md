@@ -111,6 +111,19 @@ The JS outputs a JSON string. Parse it with:
 2. Name it "Risset Generator.amxd"
 3. Save to your User Library or a location in your Max search path
 
+## Development Workflow
+
+The `.maxpat` file is the human-readable source, but the `.amxd` file is what actually runs in Ableton. These are separate files - **changes to the `.maxpat` do not automatically update the `.amxd`**.
+
+When making changes:
+
+1. Edit the `.maxpat` file (directly or via code)
+2. Open the `.amxd` in Max (click Edit on the device in Ableton)
+3. Manually copy/paste the changes from `.maxpat` to the `.amxd`, or rewire as needed
+4. Save the `.amxd`
+
+Alternatively, you can rebuild the `.amxd` from scratch by opening the `.maxpat` in Max and exporting (File → Export as Max for Live Device), but this may lose device-specific settings.
+
 ## Usage
 
 1. Create a MIDI track with any instrument
@@ -136,6 +149,17 @@ The JS outputs a JSON string. Parse it with:
 | Measures | Number of measures to generate | 4 |
 | Pitch Low | MIDI note for Layer 1 | 60 (C3) |
 | Pitch High | MIDI note for Layer 2 | 64 (E3) |
+
+## Ratio Constraints
+
+The ratio numerator/denominator relationship depends on direction:
+
+- **Accelerating**: numerator < denominator (e.g., 2:9)
+  - Think of it as speeding up from a smaller number to a larger number
+- **Decelerating**: numerator > denominator (e.g., 9:2)
+  - Think of it as slowing down from a larger number to a smaller number
+
+The UI enforces these constraints automatically and displays a reminder at the bottom of the panel.
 
 ## How It Works
 
