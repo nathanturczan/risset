@@ -155,9 +155,9 @@ Alternatively, you can rebuild the `.amxd` from scratch by opening the `.maxpat`
 The ratio numerator/denominator relationship depends on direction:
 
 - **Accelerating**: numerator < denominator (e.g., 2:9)
-  - Think of it as speeding up from a smaller number to a larger number
+  - Smaller number on top, speeding up to larger number
 - **Decelerating**: numerator > denominator (e.g., 9:2)
-  - Think of it as slowing down from a larger number to a smaller number
+  - Larger number on top, slowing down to smaller number
 
 The UI enforces these constraints automatically and displays a reminder at the bottom of the panel.
 

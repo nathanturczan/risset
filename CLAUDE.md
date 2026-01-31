@@ -15,10 +15,10 @@ Nathan Turczan is a composer and creative technologist based in Los Angeles, CA.
 
 ## Ratio Constraints
 The ratio numerator/denominator constraints differ by direction:
-- **Accelerating**: numerator < denominator (e.g., 2:9) - speeding up from small to large
-- **Decelerating**: numerator > denominator (e.g., 9:2) - slowing down from large to small
+- **Accelerating**: numerator < denominator (e.g., 2:9) - smaller number on top, speeding up to larger
+- **Decelerating**: numerator > denominator (e.g., 9:2) - larger number on top, slowing down to smaller
 
-The JS normalizes the ratio internally to always be > 1, so the direction toggle controls the tempo change direction.
+The UI enforces these constraints and displays a reminder. The JS normalizes the ratio internally to always be > 1, so the direction toggle controls the tempo change direction.
 
 ## Terminology
 - Use "metabar" (no hyphen) to match academic literature (Stowell 2011)
