@@ -369,7 +369,7 @@
     <div class="controls-section">
         <!-- Row 1: Direction & Mode -->
         <div class="control-row">
-            <div class="control-group">
+            <div class="control-group" onmouseenter="sendInfo('direction')" onmouseleave="clearInfo()">
                 <div class="control-label">Direction</div>
                 <div class="toggle-container">
                     <button class="toggle-option active" id="accel-btn" onclick="setDirection('accel')">Accel ↗</button>
@@ -377,7 +377,7 @@
                 </div>
             </div>
 
-            <div class="control-group mode-group">
+            <div class="control-group mode-group" onmouseenter="sendInfo('mode')" onmouseleave="clearInfo()">
                 <div class="control-label">Mode</div>
                 <div class="select-container">
                     <select class="custom-select" id="mode-select" onchange="setMode(this.value)">
@@ -392,7 +392,7 @@
         <!-- Row 2: Ratio + Pitch aligned -->
         <div class="control-row ratio-pitch-row">
             <!-- Ratio section -->
-            <div class="control-group">
+            <div class="control-group" onmouseenter="sendInfo('ratio')" onmouseleave="clearInfo()">
                 <div class="control-label">Ratio</div>
                 <div class="ratio-pitch-grid">
                     <!-- Numerator row -->
@@ -416,7 +416,7 @@
 
             <!-- Pitch section aligned with ratio rows -->
             <div class="control-group pitch-group">
-                <div class="pitch-row">
+                <div class="pitch-row" onmouseenter="sendInfo('pitch-high')" onmouseleave="clearInfo()">
                     <div class="control-label">High (In)</div>
                     <div class="pitch-control">
                         <input type="number" class="pitch-input" id="pitch-high" value="64" min="0" max="127" onchange="setPitchHigh()">
@@ -427,7 +427,7 @@
                         <span class="pitch-note" id="pitch-high-note">E3</span>
                     </div>
                 </div>
-                <div class="pitch-row">
+                <div class="pitch-row" onmouseenter="sendInfo('pitch-low')" onmouseleave="clearInfo()">
                     <div class="control-label">Low (Out)</div>
                     <div class="pitch-control">
                         <input type="number" class="pitch-input" id="pitch-low" value="60" min="0" max="127" onchange="setPitchLow()">
@@ -442,7 +442,7 @@
         </div>
 
         <!-- Row 3: Velocity Response (full width) -->
-        <div class="control-row velocity-row">
+        <div class="control-row velocity-row" onmouseenter="sendInfo('velocity')" onmouseleave="clearInfo()">
             <div class="control-group velocity-group">
                 <div class="control-label">Velocity Response: <span class="velocity-value" id="velocity-value">1.5</span></div>
                 <div class="velocity-control">
@@ -458,7 +458,7 @@
         </div>
 
         <!-- Row 4: Constraint indicator (full width) -->
-        <div class="constraint-indicator" id="constraint-indicator">
+        <div class="constraint-indicator" id="constraint-indicator" onmouseenter="sendInfo('constraint')" onmouseleave="clearInfo()">
             <span class="constraint-ratio" id="constraint-ratio">2/3</span>
             <span class="constraint-text" id="constraint-text">Num < Denom → accel</span>
         </div>
@@ -478,6 +478,30 @@
         function sendToMax(param, ...values) {
             if (window.max) {
                 window.max.outlet(param, ...values);
+            }
+        }
+
+        // Info View support - sends hover info to Ableton's Info View
+        const infoTexts = {
+            'direction': ['Direction', 'Sets whether the rhythm accelerates or decelerates over time.'],
+            'mode': ['Mode', 'Arc outputs 2 metabars (complete cycle). Ramp outputs 1 metabar (building block).'],
+            'ratio': ['Ratio', 'The tempo ratio between start and end of each metabar.'],
+            'pitch-high': ['High Pitch', 'MIDI pitch for the layer that fades in (gets louder).'],
+            'pitch-low': ['Low Pitch', 'MIDI pitch for the layer that fades out (gets quieter).'],
+            'velocity': ['Velocity Response', 'Shapes the velocity crossfade curve. Lower values are punchier, higher values are gentler.'],
+            'constraint': ['Constraint', 'Shows the current ratio and direction constraint.']
+        };
+
+        function sendInfo(key) {
+            if (window.max && infoTexts[key]) {
+                const [title, desc] = infoTexts[key];
+                window.max.outlet('info', 'Risset: ' + title, desc);
+            }
+        }
+
+        function clearInfo() {
+            if (window.max) {
+                window.max.outlet('info', '', '');
             }
         }
 
