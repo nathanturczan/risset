@@ -309,7 +309,8 @@ def generate_risset_rhythm(
     note_pitch_low=60,
     note_pitch_high=64,
     output_file="risset.mid",
-    ramp=False
+    ramp=False,
+    velocity_gamma=1.5
 ):
     """
     Generate a Risset rhythm MIDI file with two layers.
@@ -321,6 +322,12 @@ def generate_risset_rhythm(
     Ramp mode (--ramp): 1 metabar, a building block for composition.
       - One pitch fading out, one fading in
       - Use for transitions, stacking, layering
+
+    velocity_gamma: Controls the velocity crossfade curve shape (0.5–3.0).
+      - 0.5 = "Punch" (hard, compensatory - boosts middle velocities)
+      - 1.0 = Linear (proportional fade)
+      - 1.5 = Default (balanced)
+      - 3.0 = "Gentle" (soft, conservative - reduces middle velocities)
     """
 
     # Calculate duration in beats
@@ -393,6 +400,11 @@ def generate_risset_rhythm(
         first note of the fade_out layer at the seam. Two 1s at the opposite
         seam is acceptable (imperceptible).
 
+        Velocity curve is shaped by velocity_gamma (power law):
+        - 0.5 = "Punch" (hard, compensatory - boosts middle velocities)
+        - 1.0 = Linear (proportional fade)
+        - 3.0 = "Gentle" (soft, conservative - reduces middle velocities)
+
         Notes are filtered by duration FIRST, then velocities calculated on
         the remaining notes.
         """
@@ -417,7 +429,7 @@ def generate_risset_rhythm(
                     progress = i / (n_notes - 1)  # 0.0 to 1.0
                 else:
                     progress = 0.0  # Single note gets 127
-                velocity = round(127 - 126 * progress)  # 127 → 1
+                linear_vel = 1.0 - progress  # 1.0 → 0.0
             else:
                 # Fade in: 1 → (not quite 127)
                 # The 127 belongs to the first note of the fade_out layer at the seam.
@@ -426,7 +438,11 @@ def generate_risset_rhythm(
                     progress = i / n_notes  # 0.0 to (n_notes-1)/n_notes, never reaches 1.0
                 else:
                     progress = 0.0  # Single note gets 1
-                velocity = round(1 + 126 * progress)    # 1 → ~118-125
+                linear_vel = progress  # 0.0 → ~0.9
+
+            # Apply gamma curve (power law) to shape the velocity
+            shaped = math.pow(linear_vel, velocity_gamma)
+            velocity = round(1 + 126 * shaped)
 
             # Clamp to valid MIDI range
             velocity = max(1, min(127, velocity))
@@ -458,6 +474,8 @@ def generate_risset_rhythm(
     print(f"  Direction: {direction}")
     print(f"  Layer 1: {layer1_start:.1f} → {layer1_end:.1f} BPM (fades out)")
     print(f"  Layer 2: {layer2_start:.1f} → {layer2_end:.1f} BPM (fades in)")
+    curve_name = "punch" if velocity_gamma < 0.8 else "linear" if velocity_gamma < 1.2 else "gentle" if velocity_gamma > 2.5 else "balanced"
+    print(f"  Velocity curve: {velocity_gamma:.1f} ({curve_name})")
 
     # Return data for LilyPond generation
     return {
@@ -491,6 +509,8 @@ if __name__ == "__main__":
                         help="Output file (default: auto-generated from parameters)")
     parser.add_argument("--ramp", action="store_true",
                         help="Ramp mode: output 1 metabar (default is arc: 2 metabars)")
+    parser.add_argument("--velocity-curve", type=float, default=1.5,
+                        help="Velocity curve gamma (0.5=punch, 1.0=linear, 1.5=default, 3.0=gentle)")
     parser.add_argument("--lilypond", action="store_true",
                         help="Also generate LilyPond notation file (.ly)")
 
@@ -513,6 +533,11 @@ if __name__ == "__main__":
 
     ratio_num = int(ratio_parts[0])
     ratio_den = int(ratio_parts[1])
+
+    # Validate velocity curve
+    if args.velocity_curve < 0.5 or args.velocity_curve > 3.0:
+        print(f"Error: velocity-curve must be between 0.5 and 3.0 (got {args.velocity_curve})")
+        exit(1)
 
     # Validate ratio direction and auto-flip if contradictory
     # For accel: ratio should be < 1 (num < den) - "speeding up from num to den"
@@ -549,7 +574,8 @@ if __name__ == "__main__":
         note_pitch_low=args.pitch_low,
         note_pitch_high=args.pitch_high,
         output_file=output_file,
-        ramp=args.ramp
+        ramp=args.ramp,
+        velocity_gamma=args.velocity_curve
     )
 
     # Generate LilyPond file if requested
