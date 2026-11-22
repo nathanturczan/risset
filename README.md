@@ -16,7 +16,7 @@ Traditional Risset rhythms use **tempo octaves** (2:1 ratio). **Polyrhythmic Ris
 
 ```bash
 pip install midiutil
-python risset.py --ratio 2/1 --direction accel --measures 8
+python risset.py --ratio 1/2 --direction accel --measures 8
 ```
 
 ## How It Works
@@ -48,30 +48,33 @@ At the metabar boundary, the fading-in layer has reached the starting tempo of t
 ## Usage
 
 ```bash
-# Classic 2:1 acceleration (8 measures)
-python risset.py --ratio 2/1 --direction accel --measures 8
+# Classic 1:2 acceleration (8 measures)
+python risset.py --ratio 1/2 --direction accel --measures 8
 
-# Polyrhythmic 3:2 acceleration
-python risset.py --ratio 3/2 --direction accel --measures 8
+# Polyrhythmic 2:3 acceleration
+python risset.py --ratio 2/3 --direction accel --measures 8
 
-# Deceleration with 3:5 ratio
-python risset.py --ratio 3/5 --direction decel --measures 8
+# Deceleration with 5:3 ratio
+python risset.py --ratio 5/3 --direction decel --measures 8
 
 # Single metabar (ramp mode)
-python risset.py --ratio 2/1 --direction accel --measures 4 --ramp
+python risset.py --ratio 1/2 --direction accel --measures 4 --ramp
 ```
 
 ## Parameters
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `--ratio` | 2/1 | Tempo ratio between layers |
+| `--ratio` | 2 | Tempo ratio between layers, whole numbers: smaller number first for `accel` (`1/2`, `2:3`), larger first for `decel` (`2/1`, `3:2`). A reversed ratio is flipped with a warning. A single number `N` means N:1 |
 | `--direction` | (required) | `accel` or `decel` |
 | `--measures` | 4 | Output length in measures |
 | `--bpm` | 120 | Base tempo |
+| `--time-sig` | 4/4 | Time signature |
 | `--ramp` | off | Output single metabar |
 | `--pitch-low` | 60 | MIDI note for layer 1 |
 | `--pitch-high` | 64 | MIDI note for layer 2 |
+| `--velocity-curve` | 1.5 | Velocity curve gamma, 0.5 to 3.0 (0.5 = punch, 1.0 = linear, 3.0 = gentle) |
+| `--lilypond` | off | Also write a LilyPond notation file (`.ly`) |
 | `-o` | auto | Output filename |
 
 ## Examples

@@ -78,6 +78,10 @@ function enforce() {
     correctedNum = Math.max(1, Math.min(9, correctedNum));
     correctedDen = Math.max(1, Math.min(9, correctedDen));
 
+    // Keep the corrected values so the next edit starts from what is displayed
+    num = correctedNum;
+    den = correctedDen;
+
     // Output corrected values (right to left in Max)
     outlet(1, correctedDen);
     outlet(0, correctedNum);

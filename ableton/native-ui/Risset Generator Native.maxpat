@@ -718,6 +718,12 @@
 			},
 			{
 				"patchline" : 				{
+					"destination" : [ "obj-js", 0 ],
+					"source" : [ "obj-miditool-in", 1 ]
+				}
+			},
+			{
+				"patchline" : 				{
 					"destination" : [ "obj-miditool-out", 0 ],
 					"source" : [ "obj-js", 0 ]
 				}

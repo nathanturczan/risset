@@ -496,8 +496,10 @@ if __name__ == "__main__":
                         help="Base tempo (default: 120)")
     parser.add_argument("--measures", type=int, default=4,
                         help="Number of measures (default: 4)")
-    parser.add_argument("--ratio", type=str, default="2/1",
-                        help="Speed ratio (default: 2/1)")
+    parser.add_argument("--ratio", type=str, default=None,
+                        help="Speed ratio as num/den or num:den: smaller number first for accel (1/2), "
+                             "larger first for decel (2/1). A single whole number N means N:1 "
+                             "(default: 2)")
     parser.add_argument("--direction", type=str, required=True,
                         choices=["accel", "decel"],
                         help="Direction: accel or decel (REQUIRED)")
@@ -516,35 +518,68 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    def fail(message):
+        print(f"Error: {message}")
+        exit(1)
+
+    def parse_int_pair(text, separators, name, example):
+        for sep in separators:
+            if sep in text:
+                parts = text.split(sep)
+                break
+        else:
+            parts = [text]
+        if len(parts) != 2:
+            fail(f"{name} must be num/den (e.g., {example})")
+        try:
+            return int(parts[0]), int(parts[1])
+        except ValueError:
+            fail(f"{name} must use whole numbers (got {text})")
+
     # Parse time signature
-    time_parts = args.time_sig.split("/")
-    if len(time_parts) != 2:
-        print("Error: time signature must be num/den (e.g., 4/4)")
-        exit(1)
+    time_sig_num, time_sig_den = parse_int_pair(args.time_sig, ["/"], "time signature", "4/4")
+    if time_sig_num < 1:
+        fail(f"time signature numerator must be at least 1 (got {args.time_sig})")
+    if time_sig_den < 1 or time_sig_den & (time_sig_den - 1) != 0:
+        fail(f"time signature denominator must be a power of 2 (got {args.time_sig})")
 
-    time_sig_num = int(time_parts[0])
-    time_sig_den = int(time_parts[1])
+    # Parse ratio: num/den, num:den, or a single whole number N meaning N:1
+    # (the same forms audio_risset.py accepts)
+    ratio_text = args.ratio if args.ratio is not None else "2"
+    ratio_has_order = "/" in ratio_text or ":" in ratio_text
+    if not ratio_has_order:
+        ratio_text = f"{ratio_text}/1"
+    ratio_num, ratio_den = parse_int_pair(ratio_text, ["/", ":"], "ratio", "2/1")
+    if ratio_num < 1 or ratio_den < 1:
+        fail(f"ratio parts must be at least 1 (got {ratio_text})")
+    if ratio_num == ratio_den:
+        fail(f"ratio parts must be different (got {ratio_text})")
 
-    # Parse ratio
-    ratio_parts = args.ratio.split("/")
-    if len(ratio_parts) != 2:
-        print("Error: ratio must be num/den (e.g., 2/1)")
-        exit(1)
-
-    ratio_num = int(ratio_parts[0])
-    ratio_den = int(ratio_parts[1])
+    if not args.bpm > 0 or math.isinf(args.bpm):
+        fail(f"bpm must be greater than 0 (got {args.bpm})")
+    if args.measures < 1:
+        fail(f"measures must be at least 1 (got {args.measures})")
+    for name, pitch in (("pitch-low", args.pitch_low), ("pitch-high", args.pitch_high)):
+        if pitch < 0 or pitch > 127:
+            fail(f"{name} must be between 0 and 127 (got {pitch})")
+    if args.pitch_low == args.pitch_high:
+        fail(f"pitch-low and pitch-high must be different (got {args.pitch_low})")
 
     # Validate velocity curve
-    if args.velocity_curve < 0.5 or args.velocity_curve > 3.0:
-        print(f"Error: velocity-curve must be between 0.5 and 3.0 (got {args.velocity_curve})")
-        exit(1)
+    if not 0.5 <= args.velocity_curve <= 3.0:
+        fail(f"velocity-curve must be between 0.5 and 3.0 (got {args.velocity_curve})")
 
     # Validate ratio direction and auto-flip if contradictory
     # For accel: ratio should be < 1 (num < den) - "speeding up from num to den"
     # For decel: ratio should be > 1 (num > den) - "slowing down from num to den"
     ratio_value = ratio_num / ratio_den
 
-    if args.direction == "accel" and ratio_value > 1:
+    if not ratio_has_order:
+        # A single number (or the default) states no ordering, so there is
+        # nothing to contradict: order it for the direction without a warning.
+        if args.direction == "accel":
+            ratio_num, ratio_den = ratio_den, ratio_num
+    elif args.direction == "accel" and ratio_value > 1:
         print(f"Warning: {ratio_num}/{ratio_den} with 'accel' is contradictory.")
         print(f"  '{ratio_num}/{ratio_den}' suggests {ratio_num} slowing to {ratio_den}, not accelerating.")
         print(f"  Auto-flipping to {ratio_den}/{ratio_num} for acceleration ({ratio_den} → {ratio_num}).")

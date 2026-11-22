@@ -76,10 +76,10 @@ Open any `.mp3` file in VLC or your audio player and enable looping. The files a
 
 ```bash
 # Arc mode (default): 8 measures output
-python risset.py --ratio 2/1 --direction accel --measures 8
+python risset.py --ratio 1/2 --direction accel --measures 8
 
 # Ramp mode: 4 measures output (single metabar)
-python risset.py --ratio 2/1 --direction accel --measures 4 --ramp
+python risset.py --ratio 1/2 --direction accel --measures 4 --ramp
 
 # Different tempo
 python risset.py --ratio 3/2 --direction decel --bpm 100 --measures 8
