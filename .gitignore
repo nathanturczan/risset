@@ -43,3 +43,10 @@ visualization/piano_rolls/*
 !visualization/piano_rolls/risset_120bpm_3-2_accel_8m_ramp.png
 !visualization/piano_rolls/risset_120bpm_5-4_decel_8m_arc.png
 !visualization/piano_rolls/risset_120bpm_5-4_decel_8m_ramp.png
+
+# Research folder - ignore images/attachments and private correspondence
+research/*.jpg
+research/*.jpeg
+research/*.png
+research/*.gif
+research/COMMUNITY.md
