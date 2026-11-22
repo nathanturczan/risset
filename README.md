@@ -65,13 +65,16 @@ python risset.py --ratio 2/1 --direction accel --measures 4 --ramp
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `--ratio` | 2/1 | Tempo ratio between layers |
+| `--ratio` | 2/1 | Tempo ratio between layers, whole numbers (`2/1`, `3:2`, or `2`); either ordering gives the same rhythm |
 | `--direction` | (required) | `accel` or `decel` |
 | `--measures` | 4 | Output length in measures |
 | `--bpm` | 120 | Base tempo |
+| `--time-sig` | 4/4 | Time signature |
 | `--ramp` | off | Output single metabar |
 | `--pitch-low` | 60 | MIDI note for layer 1 |
 | `--pitch-high` | 64 | MIDI note for layer 2 |
+| `--velocity-curve` | 1.5 | Velocity curve gamma, 0.5 to 3.0 (0.5 = punch, 1.0 = linear, 3.0 = gentle) |
+| `--lilypond` | off | Also write a LilyPond notation file (`.ly`) |
 | `-o` | auto | Output filename |
 
 ## Examples
