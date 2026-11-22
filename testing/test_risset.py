@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 """
-Test script for Risset rhythm generator.
+Tests for the Risset rhythm generator.
 Checks velocity crossfade and loop seam continuity.
+
+Run with: pytest testing
+Requires mido and pytest (see requirements-dev.txt).
 """
 
-import subprocess
+import contextlib
+import io
+import os
 import sys
 
-# Try to import mido for MIDI parsing
-try:
-    from mido import MidiFile
-except ImportError:
-    print("Installing mido for MIDI analysis...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "mido"])
-    from mido import MidiFile
+import pytest
+from mido import MidiFile
+
+# Import risset.py from the repository root regardless of the working directory
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+import risset
 
 
 def analyze_midi(filepath, total_beats, base_bpm):
@@ -257,86 +261,82 @@ def print_results(results):
     return results["all_pass"]
 
 
-def run_test(ratio, direction, measures=4, bpm=120):
-    """Generate a MIDI file and analyze it."""
-    import os
-    import re
-
-    # Generate the MIDI file
-    cmd = [
-        "python3", "risset.py",
-        "--ratio", ratio,
-        "--direction", direction,
-        "--measures", str(measures),
-        "--bpm", str(bpm)
-    ]
-
-    print(f"\nRunning: {' '.join(cmd)}")
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    print(result.stdout)
-    if result.stderr:
-        print(f"STDERR: {result.stderr}")
-
-    # Parse actual filename from output (handles auto-flipped ratios)
-    match = re.search(r"Generated: (.+\.mid)", result.stdout)
-    if match:
-        filename = match.group(1)
-    else:
-        # Fallback to expected filename
-        ratio_parts = ratio.split("/")
-        bpm_str = f"{int(bpm)}bpm" if bpm == int(bpm) else f"{bpm}bpm"
-        filename = f"risset_{bpm_str}_{ratio_parts[0]}-{ratio_parts[1]}_{direction}_{measures}m.mid"
-
-    if not os.path.exists(filename):
-        print(f"ERROR: File {filename} not created!")
-        return False
-
-    # Calculate total beats
-    total_beats = 4 * measures  # Assuming 4/4 time
-
-    # Analyze
-    results = analyze_midi(filename, total_beats, bpm)
-    return print_results(results)
+def generate(tmp_path, ratio, direction, measures=4, bpm=120, ramp=True):
+    """Generate a MIDI file in tmp_path by calling the generator directly."""
+    ratio_num, ratio_den = (int(p) for p in ratio.split("/"))
+    output_file = str(tmp_path / "risset.mid")
+    with contextlib.redirect_stdout(io.StringIO()):
+        risset.generate_risset_rhythm(
+            bpm=bpm,
+            num_measures=measures,
+            ratio_num=ratio_num,
+            ratio_den=ratio_den,
+            direction=direction,
+            output_file=output_file,
+            ramp=ramp
+        )
+    return output_file
 
 
-def main():
-    """Run test suite."""
-    print("\n" + "="*60)
-    print("RISSET RHYTHM TEST SUITE")
-    print("="*60)
+def read_notes(filepath):
+    """Return sorted (time_in_beats, pitch, velocity) for every note_on."""
+    mid = MidiFile(filepath)
+    notes = []
+    for track in mid.tracks:
+        current_time = 0
+        for msg in track:
+            current_time += msg.time
+            if msg.type == 'note_on' and msg.velocity > 0:
+                notes.append((current_time / mid.ticks_per_beat, msg.note, msg.velocity))
+    notes.sort()
+    return notes
 
-    test_cases = [
-        # (ratio, direction)
-        ("2/1", "accel"),
-        ("2/1", "decel"),
-        ("3/4", "accel"),
-        ("3/4", "decel"),
-        ("8/5", "accel"),
-        ("8/5", "decel"),
-        ("5/8", "accel"),
-        ("5/8", "decel"),
-    ]
 
-    results = []
-    for ratio, direction in test_cases:
-        passed = run_test(ratio, direction)
-        results.append((ratio, direction, passed))
+TEST_CASES = [
+    # (ratio, direction)
+    ("2/1", "accel"),
+    ("2/1", "decel"),
+    ("3/4", "accel"),
+    ("3/4", "decel"),
+    ("8/5", "accel"),
+    ("8/5", "decel"),
+    ("5/8", "accel"),
+    ("5/8", "decel"),
+]
 
-    # Summary
-    print("\n" + "="*60)
-    print("SUMMARY")
-    print("="*60)
 
-    for ratio, direction, passed in results:
-        status = "✓" if passed else "✗"
-        print(f"  {status} {ratio} {direction}")
+@pytest.mark.parametrize("ratio,direction", TEST_CASES)
+@pytest.mark.parametrize("measures", [4, 8])
+def test_ramp_seam(tmp_path, ratio, direction, measures):
+    """Ramp mode (1 metabar): one pitch per layer, so the layer checks apply."""
+    filename = generate(tmp_path, ratio, direction, measures=measures, ramp=True)
+    total_beats = 4 * measures  # 4/4 time
 
-    total_passed = sum(1 for _, _, p in results if p)
-    print(f"\n{total_passed}/{len(results)} tests passed")
+    results = analyze_midi(filename, total_beats, 120)
+    assert "error" not in results, results
+    failed = [c for c in results["checks"] if not c["pass"]]
+    if failed:
+        print_results(results)
+    assert not failed
 
-    return all(p for _, _, p in results)
+
+@pytest.mark.parametrize("ratio,direction", TEST_CASES)
+def test_arc_is_ramp_repeated_with_pitches_swapped(tmp_path, ratio, direction):
+    """Arc mode (2 metabars): metabar 2 repeats metabar 1 with the pitches swapped."""
+    measures = 8
+    metabar_beats = 4 * measures / 2
+    notes = read_notes(generate(tmp_path, ratio, direction, measures=measures, ramp=False))
+
+    pitches = sorted(set(p for _, p, _ in notes))
+    assert len(pitches) == 2
+    swap = {pitches[0]: pitches[1], pitches[1]: pitches[0]}
+
+    first = [(round(t, 3), p, v) for t, p, v in notes if t < metabar_beats]
+    second = [(round(t - metabar_beats, 3), swap[p], v) for t, p, v in notes if t >= metabar_beats]
+    assert first
+    assert sorted(first) == sorted(second)
+    assert max(t for t, _, _ in notes) < 2 * metabar_beats
 
 
 if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1)
+    sys.exit(pytest.main([os.path.abspath(__file__)]))
