@@ -42,3 +42,50 @@ def test_ratio_ordering_does_not_change_the_rhythm(tmp_path):
         assert result.returncode == 0, result.stderr
     with open(str(tmp_path / "a.mid"), "rb") as a, open(str(tmp_path / "b.mid"), "rb") as b:
         assert a.read() == b.read()
+
+
+@pytest.mark.parametrize("args", [
+    ["--ratio", "1.5/1"],
+    ["--ratio", "2/0"],
+    ["--ratio", "0/1"],
+    ["--ratio=-2/1"],
+    ["--ratio", "2/2"],
+    ["--ratio", "2/1/3"],
+    ["--ratio", "abc"],
+    ["--bpm", "0"],
+    ["--bpm", "-120"],
+    ["--bpm", "nan"],
+    ["--time-sig", "4/0"],
+    ["--time-sig", "0/4"],
+    ["--time-sig", "4/3"],
+    ["--time-sig", "4"],
+    ["--pitch-low", "60", "--pitch-high", "60"],
+    ["--pitch-high", "128"],
+    ["--pitch-low", "-1"],
+    ["--measures", "0"],
+    ["--measures", "-2"],
+    ["--velocity-curve", "nan"],
+])
+def test_bad_input_exits_with_one_line_error(tmp_path, args):
+    result = run_cli(tmp_path, "--direction", "accel", *args)
+    assert result.returncode == 1
+    assert "Traceback" not in result.stderr
+    lines = result.stdout.strip().splitlines()
+    assert len(lines) == 1 and lines[0].startswith("Error: "), result.stdout
+    assert os.listdir(str(tmp_path)) == []
+
+
+@pytest.mark.parametrize("ratio,expected", [
+    ("2", "risset_120bpm_2-1_accel_4m.mid"),
+    ("3:2", "risset_120bpm_3-2_accel_4m.mid"),
+])
+def test_ratio_forms_shared_with_audio_risset(tmp_path, ratio, expected):
+    result = run_cli(tmp_path, "--ratio", ratio, "--direction", "accel")
+    assert result.returncode == 0, result.stderr
+    assert os.listdir(str(tmp_path)) == [expected]
+
+
+def test_non_default_time_signature_still_works(tmp_path):
+    result = run_cli(tmp_path, "--direction", "decel", "--time-sig", "6/8", "-o", "out.mid")
+    assert result.returncode == 0, result.stderr
+    assert os.path.getsize(str(tmp_path / "out.mid")) > 100

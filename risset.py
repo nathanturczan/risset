@@ -497,7 +497,7 @@ if __name__ == "__main__":
     parser.add_argument("--measures", type=int, default=4,
                         help="Number of measures (default: 4)")
     parser.add_argument("--ratio", type=str, default="2/1",
-                        help="Speed ratio (default: 2/1)")
+                        help="Speed ratio as num/den, num:den or a whole number (default: 2/1)")
     parser.add_argument("--direction", type=str, required=True,
                         choices=["accel", "decel"],
                         help="Direction: accel or decel (REQUIRED)")
@@ -516,28 +516,55 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    def fail(message):
+        print(f"Error: {message}")
+        exit(1)
+
+    def parse_int_pair(text, separators, name, example):
+        for sep in separators:
+            if sep in text:
+                parts = text.split(sep)
+                break
+        else:
+            parts = [text]
+        if len(parts) != 2:
+            fail(f"{name} must be num/den (e.g., {example})")
+        try:
+            return int(parts[0]), int(parts[1])
+        except ValueError:
+            fail(f"{name} must use whole numbers (got {text})")
+
     # Parse time signature
-    time_parts = args.time_sig.split("/")
-    if len(time_parts) != 2:
-        print("Error: time signature must be num/den (e.g., 4/4)")
-        exit(1)
+    time_sig_num, time_sig_den = parse_int_pair(args.time_sig, ["/"], "time signature", "4/4")
+    if time_sig_num < 1:
+        fail(f"time signature numerator must be at least 1 (got {args.time_sig})")
+    if time_sig_den < 1 or time_sig_den & (time_sig_den - 1) != 0:
+        fail(f"time signature denominator must be a power of 2 (got {args.time_sig})")
 
-    time_sig_num = int(time_parts[0])
-    time_sig_den = int(time_parts[1])
+    # Parse ratio: num/den, num:den, or a single whole number N meaning N/1
+    # (the same forms audio_risset.py accepts)
+    ratio_text = args.ratio
+    if "/" not in ratio_text and ":" not in ratio_text:
+        ratio_text = f"{ratio_text}/1"
+    ratio_num, ratio_den = parse_int_pair(ratio_text, ["/", ":"], "ratio", "2/1")
+    if ratio_num < 1 or ratio_den < 1:
+        fail(f"ratio parts must be at least 1 (got {args.ratio})")
+    if ratio_num == ratio_den:
+        fail(f"ratio parts must be different (got {args.ratio})")
 
-    # Parse ratio
-    ratio_parts = args.ratio.split("/")
-    if len(ratio_parts) != 2:
-        print("Error: ratio must be num/den (e.g., 2/1)")
-        exit(1)
-
-    ratio_num = int(ratio_parts[0])
-    ratio_den = int(ratio_parts[1])
+    if not args.bpm > 0 or math.isinf(args.bpm):
+        fail(f"bpm must be greater than 0 (got {args.bpm})")
+    if args.measures < 1:
+        fail(f"measures must be at least 1 (got {args.measures})")
+    for name, pitch in (("pitch-low", args.pitch_low), ("pitch-high", args.pitch_high)):
+        if pitch < 0 or pitch > 127:
+            fail(f"{name} must be between 0 and 127 (got {pitch})")
+    if args.pitch_low == args.pitch_high:
+        fail(f"pitch-low and pitch-high must be different (got {args.pitch_low})")
 
     # Validate velocity curve
-    if args.velocity_curve < 0.5 or args.velocity_curve > 3.0:
-        print(f"Error: velocity-curve must be between 0.5 and 3.0 (got {args.velocity_curve})")
-        exit(1)
+    if not 0.5 <= args.velocity_curve <= 3.0:
+        fail(f"velocity-curve must be between 0.5 and 3.0 (got {args.velocity_curve})")
 
     # Both orderings of the ratio are accepted (2/1 and 1/2 give the same rhythm):
     # the generator normalizes the ratio internally and --direction alone decides
