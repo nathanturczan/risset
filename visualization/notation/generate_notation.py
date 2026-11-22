@@ -17,12 +17,12 @@ MEASURES = 4  # Single metabar for cleaner notation
 BPM = 120
 
 def main():
-    # Create notation directory
-    notation_dir = os.path.join(os.path.dirname(__file__), "notation")
-    os.makedirs(notation_dir, exist_ok=True)
-
+    # Output next to this script (visualization/notation/)
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    risset_path = os.path.join(script_dir, "risset.py")
+    notation_dir = script_dir
+
+    # risset.py lives in the repository root, two levels up
+    risset_path = os.path.join(script_dir, "..", "..", "risset.py")
 
     generated = []
 
@@ -55,7 +55,7 @@ def main():
             else:
                 print(f"Error generating {filename}: {result.stderr}")
 
-    print(f"\nGenerated {len(generated)} LilyPond files in notation/")
+    print(f"\nGenerated {len(generated)} LilyPond files in {notation_dir}")
     print("\nTo render all to PNG, run:")
     print("  ./render_notation.sh")
 

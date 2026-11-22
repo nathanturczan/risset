@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-# Render all LilyPond files in notation/ to PNG
+# Render all LilyPond files in this directory to PNG
 #
 # Requires LilyPond: brew install lilypond
 #
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-NOTATION_DIR="$SCRIPT_DIR/notation"
+NOTATION_DIR="$SCRIPT_DIR"
 
 if ! command -v lilypond &> /dev/null; then
     echo "Error: LilyPond not found. Install with: brew install lilypond"
@@ -41,4 +41,4 @@ for f in *.png; do
 done
 
 echo ""
-echo "Rendered $count PNG files in notation/"
+echo "Rendered $count PNG files in $NOTATION_DIR"
