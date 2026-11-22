@@ -22,21 +22,49 @@ def run_cli(tmp_path, *args):
     )
 
 
+# Convention: accel is written smaller number first (num < den),
+# decel larger number first (num > den).
 @pytest.mark.parametrize("ratio,direction,expected", [
-    ("2/1", "accel", "risset_120bpm_2-1_accel_8m.mid"),
     ("1/2", "accel", "risset_120bpm_1-2_accel_8m.mid"),
-    ("3/5", "decel", "risset_120bpm_3-5_decel_8m.mid"),
+    ("2/3", "accel", "risset_120bpm_2-3_accel_8m.mid"),
+    ("2/1", "decel", "risset_120bpm_2-1_decel_8m.mid"),
     ("5/3", "decel", "risset_120bpm_5-3_decel_8m.mid"),
 ])
-def test_ratio_ordering_is_accepted_without_warning(tmp_path, ratio, direction, expected):
+def test_ratio_in_conventional_order_gives_no_warning(tmp_path, ratio, direction, expected):
     result = run_cli(tmp_path, "--ratio", ratio, "--direction", direction, "--measures", "8")
     assert result.returncode == 0, result.stderr
     assert "Warning" not in result.stdout
-    assert "contradictory" not in result.stdout
     assert os.listdir(str(tmp_path)) == [expected]
 
 
-def test_ratio_ordering_does_not_change_the_rhythm(tmp_path):
+@pytest.mark.parametrize("ratio,direction,expected", [
+    ("2/1", "accel", "risset_120bpm_1-2_accel_8m.mid"),
+    ("3:2", "accel", "risset_120bpm_2-3_accel_8m.mid"),
+    ("1/2", "decel", "risset_120bpm_2-1_decel_8m.mid"),
+    ("3/5", "decel", "risset_120bpm_5-3_decel_8m.mid"),
+])
+def test_reversed_ratio_is_flipped_with_a_warning(tmp_path, ratio, direction, expected):
+    result = run_cli(tmp_path, "--ratio", ratio, "--direction", direction, "--measures", "8")
+    assert result.returncode == 0, result.stderr
+    assert "contradictory" in result.stdout
+    assert "Auto-flipping" in result.stdout
+    assert os.listdir(str(tmp_path)) == [expected]
+
+
+@pytest.mark.parametrize("args,direction,expected", [
+    ([], "accel", "risset_120bpm_1-2_accel_4m.mid"),
+    ([], "decel", "risset_120bpm_2-1_decel_4m.mid"),
+    (["--ratio", "3"], "accel", "risset_120bpm_1-3_accel_4m.mid"),
+    (["--ratio", "3"], "decel", "risset_120bpm_3-1_decel_4m.mid"),
+])
+def test_default_and_single_number_ratio_follow_the_direction(tmp_path, args, direction, expected):
+    result = run_cli(tmp_path, "--direction", direction, *args)
+    assert result.returncode == 0, result.stderr
+    assert "Warning" not in result.stdout
+    assert os.listdir(str(tmp_path)) == [expected]
+
+
+def test_flipped_ratio_gives_the_same_rhythm(tmp_path):
     for name, ratio in (("a.mid", "2/1"), ("b.mid", "1/2")):
         result = run_cli(tmp_path, "--ratio", ratio, "--direction", "accel", "-o", name)
         assert result.returncode == 0, result.stderr
@@ -76,11 +104,11 @@ def test_bad_input_exits_with_one_line_error(tmp_path, args):
 
 
 @pytest.mark.parametrize("ratio,expected", [
-    ("2", "risset_120bpm_2-1_accel_4m.mid"),
-    ("3:2", "risset_120bpm_3-2_accel_4m.mid"),
+    ("2", "risset_120bpm_2-1_decel_4m.mid"),
+    ("3:2", "risset_120bpm_3-2_decel_4m.mid"),
 ])
 def test_ratio_forms_shared_with_audio_risset(tmp_path, ratio, expected):
-    result = run_cli(tmp_path, "--ratio", ratio, "--direction", "accel")
+    result = run_cli(tmp_path, "--ratio", ratio, "--direction", "decel")
     assert result.returncode == 0, result.stderr
     assert os.listdir(str(tmp_path)) == [expected]
 

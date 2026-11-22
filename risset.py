@@ -496,8 +496,10 @@ if __name__ == "__main__":
                         help="Base tempo (default: 120)")
     parser.add_argument("--measures", type=int, default=4,
                         help="Number of measures (default: 4)")
-    parser.add_argument("--ratio", type=str, default="2/1",
-                        help="Speed ratio as num/den, num:den or a whole number (default: 2/1)")
+    parser.add_argument("--ratio", type=str, default=None,
+                        help="Speed ratio as num/den or num:den: smaller number first for accel (1/2), "
+                             "larger first for decel (2/1). A single whole number N means N:1 "
+                             "(default: 2)")
     parser.add_argument("--direction", type=str, required=True,
                         choices=["accel", "decel"],
                         help="Direction: accel or decel (REQUIRED)")
@@ -541,16 +543,17 @@ if __name__ == "__main__":
     if time_sig_den < 1 or time_sig_den & (time_sig_den - 1) != 0:
         fail(f"time signature denominator must be a power of 2 (got {args.time_sig})")
 
-    # Parse ratio: num/den, num:den, or a single whole number N meaning N/1
+    # Parse ratio: num/den, num:den, or a single whole number N meaning N:1
     # (the same forms audio_risset.py accepts)
-    ratio_text = args.ratio
-    if "/" not in ratio_text and ":" not in ratio_text:
+    ratio_text = args.ratio if args.ratio is not None else "2"
+    ratio_has_order = "/" in ratio_text or ":" in ratio_text
+    if not ratio_has_order:
         ratio_text = f"{ratio_text}/1"
     ratio_num, ratio_den = parse_int_pair(ratio_text, ["/", ":"], "ratio", "2/1")
     if ratio_num < 1 or ratio_den < 1:
-        fail(f"ratio parts must be at least 1 (got {args.ratio})")
+        fail(f"ratio parts must be at least 1 (got {ratio_text})")
     if ratio_num == ratio_den:
-        fail(f"ratio parts must be different (got {args.ratio})")
+        fail(f"ratio parts must be different (got {ratio_text})")
 
     if not args.bpm > 0 or math.isinf(args.bpm):
         fail(f"bpm must be greater than 0 (got {args.bpm})")
@@ -566,9 +569,26 @@ if __name__ == "__main__":
     if not 0.5 <= args.velocity_curve <= 3.0:
         fail(f"velocity-curve must be between 0.5 and 3.0 (got {args.velocity_curve})")
 
-    # Both orderings of the ratio are accepted (2/1 and 1/2 give the same rhythm):
-    # the generator normalizes the ratio internally and --direction alone decides
-    # whether the tempo speeds up or slows down. The filename keeps the ratio as typed.
+    # Validate ratio direction and auto-flip if contradictory
+    # For accel: ratio should be < 1 (num < den) - "speeding up from num to den"
+    # For decel: ratio should be > 1 (num > den) - "slowing down from num to den"
+    ratio_value = ratio_num / ratio_den
+
+    if not ratio_has_order:
+        # A single number (or the default) states no ordering, so there is
+        # nothing to contradict: order it for the direction without a warning.
+        if args.direction == "accel":
+            ratio_num, ratio_den = ratio_den, ratio_num
+    elif args.direction == "accel" and ratio_value > 1:
+        print(f"Warning: {ratio_num}/{ratio_den} with 'accel' is contradictory.")
+        print(f"  '{ratio_num}/{ratio_den}' suggests {ratio_num} slowing to {ratio_den}, not accelerating.")
+        print(f"  Auto-flipping to {ratio_den}/{ratio_num} for acceleration ({ratio_den} → {ratio_num}).")
+        ratio_num, ratio_den = ratio_den, ratio_num
+    elif args.direction == "decel" and ratio_value < 1:
+        print(f"Warning: {ratio_num}/{ratio_den} with 'decel' is contradictory.")
+        print(f"  '{ratio_num}/{ratio_den}' suggests {ratio_num} speeding to {ratio_den}, not decelerating.")
+        print(f"  Auto-flipping to {ratio_den}/{ratio_num} for deceleration ({ratio_den} → {ratio_num}).")
+        ratio_num, ratio_den = ratio_den, ratio_num
 
     # Generate default filename with metadata if not specified
     if args.output is None:
