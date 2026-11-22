@@ -204,6 +204,13 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-js", 0 ],
+					"source" : [ "obj-miditool-in", 1 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-js", 0 ],
 					"source" : [ "obj-prepend-dir", 0 ]
 				}
 
