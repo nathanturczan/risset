@@ -539,21 +539,9 @@ if __name__ == "__main__":
         print(f"Error: velocity-curve must be between 0.5 and 3.0 (got {args.velocity_curve})")
         exit(1)
 
-    # Validate ratio direction and auto-flip if contradictory
-    # For accel: ratio should be < 1 (num < den) - "speeding up from num to den"
-    # For decel: ratio should be > 1 (num > den) - "slowing down from num to den"
-    ratio_value = ratio_num / ratio_den
-
-    if args.direction == "accel" and ratio_value > 1:
-        print(f"Warning: {ratio_num}/{ratio_den} with 'accel' is contradictory.")
-        print(f"  '{ratio_num}/{ratio_den}' suggests {ratio_num} slowing to {ratio_den}, not accelerating.")
-        print(f"  Auto-flipping to {ratio_den}/{ratio_num} for acceleration ({ratio_den} → {ratio_num}).")
-        ratio_num, ratio_den = ratio_den, ratio_num
-    elif args.direction == "decel" and ratio_value < 1:
-        print(f"Warning: {ratio_num}/{ratio_den} with 'decel' is contradictory.")
-        print(f"  '{ratio_num}/{ratio_den}' suggests {ratio_num} speeding to {ratio_den}, not decelerating.")
-        print(f"  Auto-flipping to {ratio_den}/{ratio_num} for deceleration ({ratio_den} → {ratio_num}).")
-        ratio_num, ratio_den = ratio_den, ratio_num
+    # Both orderings of the ratio are accepted (2/1 and 1/2 give the same rhythm):
+    # the generator normalizes the ratio internally and --direction alone decides
+    # whether the tempo speeds up or slows down. The filename keeps the ratio as typed.
 
     # Generate default filename with metadata if not specified
     if args.output is None:
